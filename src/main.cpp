@@ -1,7 +1,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
 #include <iostream>
 #include <string>
+
 #include "window/window.hpp"
 
 using namespace std;
@@ -16,11 +18,18 @@ void processInput(GLFWwindow* window)
 		glfwSetWindowShouldClose(window,true);
 }
 
+float vertices[] = {
+	-0.5f, -0.5f, 0.0f,
+	 0.0f, -0.5f, 0.0f,
+	 0.0f,  0.5f, 0.0f
+};
 
 int main() 
 {
-	
 	GLFWwindow* window = initWindow(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_NAME.c_str());
+
+	unsigned int VBO;
+	glGenBuffers(1, &VBO);
 
 	while(!glfwWindowShouldClose(window))
 	{
