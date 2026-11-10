@@ -2,18 +2,13 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <string>
+#include "window/window.hpp"
 
 using namespace std;
 
 constexpr int WINDOW_WIDTH  = 800;
 constexpr int WINDOW_HEIGHT = 600;
 constexpr string WINDOW_NAME = "Hello, Window";
-
-
-void framebuffer_size_callback(GLFWwindow* window, int w, int h)
-{
-	glViewport(0,0,w,h);
-}
 
 void processInput(GLFWwindow* window)
 {
@@ -24,29 +19,8 @@ void processInput(GLFWwindow* window)
 
 int main() 
 {
-	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_NAME.c_str(),NULL,NULL);
-	if (window == NULL)
-	{
-		cout << "Não deu pra criar a janela GLFW" << endl;
-		glfwTerminate();
-		return -1;
-	}
-	glfwMakeContextCurrent(window);
-
-	if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
-		cout << "Não deu pra inicialidar o GLAD" << endl;
-		return -1;
-	}
-
-	glViewport(0,0,WINDOW_WIDTH,WINDOW_HEIGHT);
 	
-	glfwSetFramebufferSizeCallback(window,framebuffer_size_callback);
+	GLFWwindow* window = initWindow(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_NAME.c_str());
 
 	while(!glfwWindowShouldClose(window))
 	{
