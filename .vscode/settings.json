@@ -3,4 +3,16 @@
   "cmake.configureOnOpen": false,
   "editor.fontFamily": "Fira Code, Menlo, Monaco, 'Courier New', monospace",
   "editor.fontLigatures": true,
+  "files.associations": {
+    "*.vs": "glsl",
+    "*.fs": "glsl"
+  },
+  "glsllint.additionalStageAssociations": {
+    "*.vs": "vert",
+    "*.fs": "frag"
+  },
+  "material-icon-theme.files.associations": {
+    "*.vs": "shader",
+    "*.fs": "shader"
+}
 }
