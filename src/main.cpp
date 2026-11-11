@@ -44,8 +44,8 @@ int main()
 	GLFWwindow* window = initWindow(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_NAME);
 
 	ShaderProgram shaderProgram1(
-		ASSETS_DIR"/shaders/interpolation.vs",
-		ASSETS_DIR"/shaders/interpolation.fs"
+		ASSETS_DIR"/shaders/interpolation/interpolation.vs",
+		ASSETS_DIR"/shaders/interpolation/interpolation.fs"
 	);
 
 	// O V Array Object armazena essas configurações 

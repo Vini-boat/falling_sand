@@ -12,12 +12,15 @@ FetchContent_Declare(tracy GIT_REPOSITORY https://github.com/wolfpld/tracy.git  
 
 FetchContent_MakeAvailable(glfw box2d tracy)
 
-add_library(glad 3rd/glad/src/glad.c)
+add_library(glad STATIC 3rd/glad/src/glad.c)
 target_include_directories(glad PUBLIC 3rd/glad/include)
+
+add_library(stb_image STATIC 3rd/stb/stb_image.cpp)
+target_include_directories(stb_image PUBLIC 3rd/stb)
 
 file(GLOB_RECURSE SRC CONFIGURE_DEPENDS src/*.cpp)
 
 add_executable(app ${SRC})
 target_include_directories(app PRIVATE src)
-target_link_libraries(app PRIVATE glad glfw box2d Tracy::TracyClient)
+target_link_libraries(app PRIVATE glad glfw box2d Tracy::TracyClient stb_image)
 target_compile_definitions(app PRIVATE ASSETS_DIR="${CMAKE_SOURCE_DIR}/assets")
