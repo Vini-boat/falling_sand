@@ -29,13 +29,23 @@ void processInput(GLFWwindow* window)
 float vertices[] = {
      0.5f,  0.5f, 0.0f,  // top right
      0.5f, -0.5f, 0.0f,  // bottom right
+	-0.5f,  0.5f, 0.0f   // top left 
+};
+
+float vertices2[] = {
+	0.5f, -0.5f, 0.0f,  // bottom right
     -0.5f, -0.5f, 0.0f,  // bottom left
     -0.5f,  0.5f, 0.0f   // top left 
 };
+
 unsigned int indices[] = {  // note that we start from 0!
-    0, 1, 3,   // first triangle
-    1, 2, 3    // second triangle
-};  
+    0, 1, 2 //,   // first triangle
+    //1, 2, 3    // second triangle
+};
+
+unsigned int indices2[] ={
+	0, 1, 2
+};
 
 // Shader que recebe as coordenadas já prontas para exibir
 //  Só passa as posições para a próxima etapa da rendering pipeline
@@ -55,6 +65,17 @@ const char* fragmentShaderSource = ""
 "{\n"
 "	FragColor = vec4( 1.0f, 0.5f, 0.2f, 1.0f );\n"
 "}\n";
+
+// Frag Shader que pinta tudo de amarelo
+const char* yellow_fragmentShaderSource = ""
+"#version 330 core\n"
+"out vec4 FragColor;\n"
+"void main()\n"
+"{\n"
+"	FragColor = vec4( 1.0f, 1.0f, 0.0f, 1.0f );\n"
+"}\n";
+
+
 
 
 
@@ -102,20 +123,56 @@ int main()
 		}
 	}
 
-	// Cria a programação de shader. 
-	// Ela que vai linkar a saída de um shader para a entrada de outro
-	unsigned int shaderProgram;
-	shaderProgram = glCreateProgram();
+	// Fragments são todas as propriedades necessárias para saber a cor do pixel
+	// Criar o Fragment Shader
+	unsigned int yellow_fragmentShader;
+	yellow_fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
+	// Atachar a fonte ao objeto de shader e compilar
+	glShaderSource(yellow_fragmentShader, 1, &yellow_fragmentShaderSource, NULL);
+	glCompileShader(yellow_fragmentShader);
 	{
 		int ok;
-		glGetProgramiv(shaderProgram,GL_LINK_STATUS, &ok);
+		glGetShaderiv(yellow_fragmentShader,GL_COMPILE_STATUS, &ok);
+		if(!ok)
+		{
+			char log[LOG_BUFF_SIZE];
+			glGetShaderInfoLog(yellow_fragmentShader,LOG_BUFF_SIZE, NULL, log);
+			cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED" << endl;
+			cout << log << endl;
+		}
+	}
+
+	// Cria a programação de shader. 
+	// Ela que vai linkar a saída de um shader para a entrada de outro
+	unsigned int shaderProgram1;
+	shaderProgram1 = glCreateProgram();
+
+	glAttachShader(shaderProgram1, vertexShader);
+	glAttachShader(shaderProgram1, fragmentShader);
+	glLinkProgram(shaderProgram1);
+	{
+		int ok;
+		glGetProgramiv(shaderProgram1,GL_LINK_STATUS, &ok);
 		if(!ok){
 			char log[LOG_BUFF_SIZE];
-			glGetProgramInfoLog(shaderProgram,LOG_BUFF_SIZE,NULL,log);
+			glGetProgramInfoLog(shaderProgram1,LOG_BUFF_SIZE,NULL,log);
+			cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED" << endl;
+			cout << log << endl;
+		}
+	}
+	unsigned int shaderProgram2;
+	shaderProgram2 = glCreateProgram();
+
+	glAttachShader(shaderProgram2, vertexShader);
+	glAttachShader(shaderProgram2, yellow_fragmentShader);
+	glLinkProgram(shaderProgram2);
+	{
+		int ok;
+		glGetProgramiv(shaderProgram2,GL_LINK_STATUS, &ok);
+		if(!ok){
+			char log[LOG_BUFF_SIZE];
+			glGetProgramInfoLog(shaderProgram2,LOG_BUFF_SIZE,NULL,log);
 			cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED" << endl;
 			cout << log << endl;
 		}
@@ -124,42 +181,70 @@ int main()
 	// Seta o a programação para ser essa para as próximas drawcalls
 	// não sei se da pra mudar os shaders dentro dela em tempo de execução
 	// ou se é melhor trocar o programa todo
-	glUseProgram(shaderProgram);
+	glUseProgram(shaderProgram1);
 
 	// Pelo jeito aqui os dados do shader já estão na GPU
 	// TODO: entender em quais funções que os dados vão para a GPU em si
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
+	glDeleteShader(yellow_fragmentShader);
 	
 	// -----------------------
 	// O V Array Object armazena essas configurações 
 	// para cada tipo de objeto que a gente pode ter
 	// essas "configurações" são as chamadas para glBindBuffe
-	unsigned int VAO;
-	glGenVertexArrays(1,&VAO);
 
-	glBindVertexArray(VAO);
+	unsigned int VAO1;
+	glGenVertexArrays(1,&VAO1);
 
 	// Criar o Vertex Buffer
-	unsigned int VBO;
-	glGenBuffers(1, &VBO);
-	
-	// Carregar os dados para o Vertex Buffer CPU -> GPU
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	unsigned int VBO1;
+	glGenBuffers(1, &VBO1);
+	unsigned int EBO1;
+	glGenBuffers(1,&EBO1);
 
-	// Configura como interpretar os atributos do vertex shader
-	// Que estão no VBO
-	glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0 );
-	glEnableVertexAttribArray(0);
+	glBindVertexArray(VAO1);
+	{
+		
+		// Carregar os dados para o Vertex Buffer CPU -> GPU
+		glBindBuffer(GL_ARRAY_BUFFER, VBO1);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+		// Configura como interpretar os atributos do vertex shader
+		// Que estão no VBO
+		glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0 );
+		glEnableVertexAttribArray(0);
+		
+		
+		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, EBO1 );
+		glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( indices ), indices, GL_STATIC_DRAW );
+	}
+	glBindVertexArray(0);
 
+	unsigned int VAO2;
+	glGenVertexArrays(1,&VAO2);
 
-	
-	unsigned int EBO;
-	glGenBuffers(1,&EBO);
-	
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, EBO );
-	glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( indices ), indices, GL_STATIC_DRAW );
+	// Criar o Vertex Buffer
+	unsigned int VBO2;
+	glGenBuffers(1, &VBO2);
+	unsigned int EBO2;
+	glGenBuffers(1,&EBO2);
+
+	glBindVertexArray(VAO2);
+	{
+		
+		// Carregar os dados para o Vertex Buffer CPU -> GPU
+		glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), vertices2, GL_STATIC_DRAW);
+		// Configura como interpretar os atributos do vertex shader
+		// Que estão no VBO
+		glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0 );
+		glEnableVertexAttribArray(0);
+		
+		
+		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, EBO2 );
+		glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( indices2 ), indices2, GL_STATIC_DRAW );
+	}
+	glBindVertexArray(0);
 
 
 
@@ -171,11 +256,15 @@ int main()
 		glClearColor( 0.2f, 0.3f, 0.3f, 1.0f );
 		glClear( GL_COLOR_BUFFER_BIT ); // escolhe qual dos buffers que vai dar clear
 
-		glUseProgram( shaderProgram );
-		glBindVertexArray( VAO );
+		glUseProgram( shaderProgram1 );
+		glBindVertexArray( VAO1 );
 		// glDrawArrays( GL_TRIANGLES, 0, 3 );
-		glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-		glBindVertexArray( 0 );
+		glDrawElements( GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+		
+		glUseProgram( shaderProgram2 );
+		glBindVertexArray( VAO2 );
+		glDrawElements( GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+
 		glfwSwapBuffers( window );
 		glfwPollEvents();
 	}
