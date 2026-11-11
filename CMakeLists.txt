@@ -6,9 +6,9 @@ set(CMAKE_CXX_STANDARD 20)
  
 include(FetchContent)
  
-FetchContent_Declare(glfw  GIT_REPOSITORY https://github.com/glfw/glfw.git       GIT_TAG 3.4)
-FetchContent_Declare(box2d GIT_REPOSITORY https://github.com/erincatto/box2d.git GIT_TAG v3.1.0)
-FetchContent_Declare(tracy GIT_REPOSITORY https://github.com/wolfpld/tracy.git   GIT_TAG v0.11.1)
+FetchContent_Declare(glfw  GIT_REPOSITORY https://github.com/glfw/glfw.git       GIT_TAG 3.4     GIT_SHALLOW TRUE)
+FetchContent_Declare(box2d GIT_REPOSITORY https://github.com/erincatto/box2d.git GIT_TAG v3.1.0  GIT_SHALLOW TRUE)
+FetchContent_Declare(tracy GIT_REPOSITORY https://github.com/wolfpld/tracy.git   GIT_TAG v0.11.1 GIT_SHALLOW TRUE)
 
 FetchContent_MakeAvailable(glfw box2d tracy)
 
