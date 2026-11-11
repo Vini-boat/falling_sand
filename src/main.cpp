@@ -30,12 +30,13 @@ void processInput(GLFWwindow* window)
 }
 
 float vertices[] = {
-     0.0f,  0.5f, 0.0f,
-    -0.5f, -0.5f, 0.0f,
-	 0.5f, -0.5f, 0.0f  
+	 // positions         // colors
+	 0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,
+	-0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,
+     0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f
 };
 unsigned int indices[] = {
-    0, 1, 2 //,   
+    0, 1, 2 
 };
 
 int main() 
@@ -43,36 +44,40 @@ int main()
 	GLFWwindow* window = initWindow(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_NAME);
 
 	ShaderProgram shaderProgram1(
-		ASSETS_DIR"/shaders/base.vs",
-		ASSETS_DIR"/shaders/base.fs"
+		ASSETS_DIR"/shaders/interpolation.vs",
+		ASSETS_DIR"/shaders/interpolation.fs"
 	);
 
 	// O V Array Object armazena essas configurações 
 	// para cada tipo de objeto que a gente pode ter
 	// essas "configurações" são as chamadas para glBindBuffe
 
-	unsigned int VAO1;
-	glGenVertexArrays(1,&VAO1);
+	unsigned int VAO;
+	glGenVertexArrays(1,&VAO);
 
 	// Criar o Vertex Buffer
-	unsigned int VBO1;
-	glGenBuffers(1, &VBO1);
-	unsigned int EBO1;
-	glGenBuffers(1,&EBO1);
+	unsigned int VBO;
+	glGenBuffers(1, &VBO);
+	unsigned int EBO;
+	glGenBuffers(1,&EBO);
 
-	glBindVertexArray(VAO1);
+	glBindVertexArray(VAO);
 	{
 		
 		// Carregar os dados para o Vertex Buffer CPU -> GPU
-		glBindBuffer(GL_ARRAY_BUFFER, VBO1);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 		// Configura como interpretar os atributos do vertex shader
 		// Que estão no VBO
-		glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0 );
+		glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0 );
 		glEnableVertexAttribArray(0);
 		
+		glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)) );
+		glEnableVertexAttribArray(1);
+
 		
-		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, EBO1 );
+		
+		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, EBO );
 		glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( indices ), indices, GL_STATIC_DRAW );
 	}
 	glBindVertexArray(0);
@@ -87,9 +92,9 @@ int main()
 
 		shaderProgram1.use();
 		float timeValue = glfwGetTime();
-		float green = (sin(timeValue) / 2.0f) + 0.5f; // normaliza de -1..1 para 0..1
-		shaderProgram1.setUVf("uColor", green);
-		glBindVertexArray( VAO1 );
+		float offset = sin(timeValue);
+		shaderProgram1.setUVf("uOffset", offset);
+		glBindVertexArray( VAO );
 		// glDrawArrays( GL_TRIANGLES, 0, 3 );
 		glDrawElements( GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
 		
