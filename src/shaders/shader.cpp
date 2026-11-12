@@ -9,7 +9,6 @@
 #include "utils/utils.hpp"
 #include "types.hpp"
 
-using namespace std;
 
 constexpr int LOG_BUFF_SIZE = 512;
 
@@ -17,8 +16,8 @@ ShaderProgram::ShaderProgram(
     const char* vertexShaderPath,
     const char* fragmentShaderPath
 ){
-    string vertexShaderSourceCode = getFileContent(vertexShaderPath);
-    string fragmentShaderSourceCode = getFileContent(fragmentShaderPath);
+    std::string vertexShaderSourceCode = getFileContent(vertexShaderPath);
+    std::string fragmentShaderSourceCode = getFileContent(fragmentShaderPath);
     
     glID vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glID fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -32,8 +31,8 @@ ShaderProgram::ShaderProgram(
             if(!ok){
                 char log[LOG_BUFF_SIZE];
                 glGetShaderInfoLog(vertexShader, LOG_BUFF_SIZE, NULL, log);
-                cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED" << endl;
-			    cout << log << endl;
+                std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED" << std::endl;
+			    std::cout << log << std::endl;
             }
         }
         
@@ -46,8 +45,8 @@ ShaderProgram::ShaderProgram(
             if(!ok){
                 char log[LOG_BUFF_SIZE];
                 glGetShaderInfoLog(fragmentShader, LOG_BUFF_SIZE, NULL, log);
-                cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED" << endl;
-			    cout << log << endl;
+                std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED" << std::endl;
+			    std::cout << log << std::endl;
             }
         }
 
@@ -61,8 +60,8 @@ ShaderProgram::ShaderProgram(
             if(!ok){
                 char log[LOG_BUFF_SIZE];
                 glGetProgramInfoLog(ID,LOG_BUFF_SIZE,NULL,log);
-                cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED" << endl;
-			    cout << log << endl;
+                std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED" << std::endl;
+			    std::cout << log << std::endl;
             }
         }
     }
@@ -76,7 +75,7 @@ void ShaderProgram::use()
 }
 
 void ShaderProgram::setUVb(
-    const string& name, 
+    const std::string& name, 
     bool value
 ){
     glUniform1i(
@@ -86,7 +85,7 @@ void ShaderProgram::setUVb(
 }
 
 void ShaderProgram::setUVi(
-    const string& name, 
+    const std::string& name, 
     i32 value
 ){
     glUniform1i(
@@ -97,7 +96,7 @@ void ShaderProgram::setUVi(
 }
 
 void ShaderProgram::setUVf(
-    const string& name, 
+    const std::string& name, 
     f32 value
 ){
     glUniform1f(

@@ -9,6 +9,7 @@
 #include "window/window.hpp"
 #include "types.hpp"
 #include "shaders/shader.hpp"
+#include "textures/texture2d.hpp"
 
 using namespace std;
 
@@ -42,10 +43,10 @@ void processInput(GLFWwindow* window)
 
 float vertices[] = {
     // positions          // colors           // texture coords
-     0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
-     0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
+     0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   2.0f, 2.0f,   // top right
+     0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   2.0f, 0.0f,   // bottom right
     -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-    -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
+    -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 2.0f    // top left 
 };
 unsigned int indices[] = {
     0, 1, 3,   // first triangle
@@ -109,112 +110,12 @@ int main()
 	}
 	glBindVertexArray(0);
 
-	// Imagens guardam a 1ª linha = topo (herança de memória/telas, +y pra baixo).
-    // O OpenGL espera a 1ª linha = base (convenção da matemática, +y pra cima).
-	stbi_set_flip_vertically_on_load(true);
 	
-	// A textura também é um objeto da GL
-	glID texture;
-	glGenTextures(1, &texture);
-	
-	// Da pra binder GL_TEXTURE_1D, GL_TEXTURE_2D e GL_TEXTURE_3D
-	// da mesma forma como os diferentes tipos de Buffers que podem ser bindados 
-	glBindTexture(GL_TEXTURE_2D, texture);
-	{
-		// Configura o filtro da textura
-		// os mas básicos são o NEAREST e o LINEAR
-	    //   NEAREST: pega a cor do "pixel" (texel) que a coordenada ta em cima
-		//   LINEAR:  interpola as cores dos pixels próximos baseado na distância
-
-		// MIN_FILTER: pra quando a textura "está menor que o original"
-		// MAG_FILTER: pra quando a textura "está maior que o original"
-
-		// MIPMAP_LINEAR: interpola de forma linear entre as camadas do mipmap 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		// Configura o que acontece quando tu acessa um valor fora do ranfe 0.0 <-> 1.0
-		// QUESTION: S e T são equivalentes a X e Y só que pra texturas 2D? 
-		// Tipos de Wrap
-		//   GL_REPEAT:
-		//   GL_MIRRORED_REPEAD:
-		//   GL_CLAMP_TO_EDGE:
-		//   GL_CLAMP_TO_BORDER:
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-		// Carrega a imagem usando a std_image
-		int width, height, numberChannels;
-		const char* path = ASSETS_DIR"/textures/container.jpg"; 
-		unsigned char* data = stbi_load(
-			path,
-			&width, &height, &numberChannels, 3 // esse 3 significa que são 3 canais desejados (RGB)
-		);
-		if(data){
-			// Carrega a textura no GL_TEXTURE_2D bindado
-			glTexImage2D(
-				GL_TEXTURE_2D,    // target
-				0,				  // nível do mipmap a ser carregado
-				GL_RGB,			  // diz o número de componentes de cor na textura
-							      //   como a GPU vai armazenar os dados
-				width, height,    // tamanho da textura
-				0,                // coisa de legado, sempre 0
-				GL_RGB,     	  // formato dos dados
-				                  //   o formato dos dados na CPU
-				GL_UNSIGNED_BYTE, // tipo de dados 
-				data              // ponteiro para os dados em si
-			);
-			// Gera os mipmaps
-			// Texturas com menos detalhes para evitar problemas quando elas são reduzidas
-			glGenerateMipmap(GL_TEXTURE_2D);  
-		}
-		else
-		{
-			cout << "ERROR::TEXTURE::FAILED_TO_LOAD" << endl;
-			cout << path << endl; 
-			cout << stbi_failure_reason() << endl;
-		}
-		stbi_image_free(data);
-	}
-	glBindTexture(GL_TEXTURE_2D, 0);
-	
-	glID texture2;
-	glGenTextures(1, &texture2);
-	
-	glBindTexture(GL_TEXTURE_2D, texture2);
-	{
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		int width, height, numberChannels;
-		const char* path = ASSETS_DIR"/textures/face.png"; 
-		unsigned char* data = stbi_load(
-			path,
-			&width, &height, &numberChannels, 4
-		);
-		if(data){
-			glTexImage2D(
-				GL_TEXTURE_2D,
-				0,
-				GL_RGBA,
-				width, height,
-				0,
-				GL_RGBA, GL_UNSIGNED_BYTE,
-				data
-			);
-			glGenerateMipmap(GL_TEXTURE_2D);
-		}
-		else
-		{
-			cout << "ERROR::TEXTURE::FAILED_TO_LOAD" << endl;
-			cout << path << endl; 
-			cout << stbi_failure_reason() << endl;
-		}
-		stbi_image_free(data);
-	}
-	glBindTexture(GL_TEXTURE_2D, 0);
-	
+	Texture2D boxTexture(ASSETS_DIR"/textures/container.jpg",{
+		.wrap_s = GL_CLAMP_TO_EDGE,
+		.wrap_t = GL_CLAMP_TO_EDGE,
+	});
+	Texture2D faceTexture(ASSETS_DIR"/textures/face.png");
 
 	while(!glfwWindowShouldClose(window))
 	{
@@ -231,16 +132,12 @@ int main()
 		// elas são targets que podem ser ativos para o 
 		//   shader poder usar várias texturas ao mesmo tempo
 		glActiveTexture(GL_TEXTURE0);
-		
-		// quando binda o texture ele fica relacionado ao texture unit bindado
-		glBindTexture(GL_TEXTURE_2D, texture);
-		
+		boxTexture.bind();
 		// tem que passar o id do texture unit para o uniform sempler poder usar
 		shaderProgram1.setUVi("texture1", 0);
 
 		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, texture2);
-		
+		faceTexture.bind();
 		shaderProgram1.setUVi("texture2", 1);
 
 		shaderProgram1.setUVf("mixFactor",mix_factor);

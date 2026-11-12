@@ -3,8 +3,6 @@
 #include <glad/glad.h>
 #include "types.hpp"
 
-using namespace std;
-
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -24,17 +22,17 @@ struct ShaderProgram {
     //       daria pra ter armazenado a localização do uniform e só setar ela
     //       mas daí teria que salver uma referencia para o uniform de alguma forma...
     void setUVb(
-        const string& name, 
+        const std::string& name, 
         bool value
     );
 
     void setUVi(
-        const string& name, 
+        const std::string& name, 
         i32 value
     );
     
     void setUVf(
-        const string& name, 
+        const std::string& name, 
         f32 value
     );
 
