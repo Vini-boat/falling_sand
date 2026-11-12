@@ -93,7 +93,7 @@ int main()
 		shaderProgram1.use();
 		float timeValue = glfwGetTime();
 		float offset = sin(timeValue);
-		shaderProgram1.setUVf("uOffset", offset);
+		shaderProgram1.setUniform("uOffset", offset);
 		glBindVertexArray( VAO );
 		// glDrawArrays( GL_TRIANGLES, 0, 3 );
 		glDrawElements( GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);

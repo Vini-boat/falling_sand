@@ -74,7 +74,7 @@ void ShaderProgram::use()
     glUseProgram(ID);
 }
 
-void ShaderProgram::setUVb(
+void ShaderProgram::setUniform(
     const std::string& name, 
     bool value
 ){
@@ -84,7 +84,7 @@ void ShaderProgram::setUVb(
     );
 }
 
-void ShaderProgram::setUVi(
+void ShaderProgram::setUniform(
     const std::string& name, 
     i32 value
 ){
@@ -95,7 +95,7 @@ void ShaderProgram::setUVi(
 
 }
 
-void ShaderProgram::setUVf(
+void ShaderProgram::setUniform(
     const std::string& name, 
     f32 value
 ){

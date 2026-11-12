@@ -23,17 +23,17 @@ struct ShaderProgram {
     // TODO: assim ele ta buscando a localização do uniform em toda a call
     //       daria pra ter armazenado a localização do uniform e só setar ela
     //       mas daí teria que salver uma referencia para o uniform de alguma forma...
-    void setUVb(
+    void setUniform(
         const string& name, 
         bool value
     );
 
-    void setUVi(
+    void setUniform(
         const string& name, 
         i32 value
     );
     
-    void setUVf(
+    void setUniform(
         const string& name, 
         f32 value
     );

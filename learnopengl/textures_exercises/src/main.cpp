@@ -236,14 +236,14 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, texture);
 		
 		// tem que passar o id do texture unit para o uniform sempler poder usar
-		shaderProgram1.setUVi("texture1", 0);
+		shaderProgram1.setUniform("texture1", 0);
 
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, texture2);
 		
-		shaderProgram1.setUVi("texture2", 1);
+		shaderProgram1.setUniform("texture2", 1);
 
-		shaderProgram1.setUVf("mixFactor",mix_factor);
+		shaderProgram1.setUniform("mixFactor",mix_factor);
 		
 		glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		
