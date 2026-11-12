@@ -17,17 +17,27 @@ constexpr int    WINDOW_HEIGHT = 600;
 constexpr char   WINDOW_NAME[] = "Hello, Window";
 constexpr int 	 LOG_BUFF_SIZE = 512;
 
+float mix_factor = 0.2f;
 
 void processInput(GLFWwindow* window)
 {
+	// Fechar a janela
 	if(glfwGetKey(window,GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window,true);
 
+	// Trocar o modo para só as linhas
 	if(glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
 		glPolygonMode(GL_FRONT_AND_BACK , GL_LINE);
 
 	if(glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
 		glPolygonMode(GL_FRONT_AND_BACK , GL_FILL);
+	
+	// Trocar a proporção de mix das texturas
+	if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+		mix_factor = min(1.0f, mix_factor + 0.001f);
+		if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+		mix_factor = max(0.0f, mix_factor - 0.001f);
+	
 }
 
 float vertices[] = {
@@ -88,18 +98,19 @@ int main()
 			2, 								// Número de componentes, tem que ser 1,2,3 ou 4 (pq vai virar um vec)
 			GL_FLOAT,						// Data type de cada componenete
 			GL_FALSE, 						// fala se o dado tem que ser normalizado, entre -1 e 1 para signed e 0 e 1 para unsigned
-			8 * sizeof(float),				// stride, o offset entre atributos do mesmo tipo
+											//   só vale pra GL_BYTE E GL_UNSIGNED_BYTE
+			8 * sizeof(float),				// stride, o offset em bytes entre o mesmo atributo em vértices consecutivos
 			(void*)(6 * sizeof(float))      // offset inicial para o começo do atributo
 		);
-		glEnableVertexAttribArray(2);		// ativa essa configuração efetivamente
+		glEnableVertexAttribArray(2);		// ativa a configuração 2 efetivamente. pode ser chamado em qqr momento com o VAO bindado
 
 		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, EBO );
 		glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( indices ), indices, GL_STATIC_DRAW );
 	}
 	glBindVertexArray(0);
 
-	// por conta das coordenadas de exibição serem com o y invertido
-	// por conta dos backgrouds diferentes
+	// Imagens guardam a 1ª linha = topo (herança de memória/telas, +y pra baixo).
+    // O OpenGL espera a 1ª linha = base (convenção da matemática, +y pra cima).
 	stbi_set_flip_vertically_on_load(true);
 	
 	// A textura também é um objeto da GL
@@ -114,20 +125,30 @@ int main()
 		// os mas básicos são o NEAREST e o LINEAR
 	    //   NEAREST: pega a cor do "pixel" (texel) que a coordenada ta em cima
 		//   LINEAR:  interpola as cores dos pixels próximos baseado na distância
+
+		// MIN_FILTER: pra quando a textura "está menor que o original"
+		// MAG_FILTER: pra quando a textura "está maior que o original"
+
+		// MIPMAP_LINEAR: interpola de forma linear entre as camadas do mipmap 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		// Configura o que acontece quando tu acessa um valor fora do ranfe 0.0 <-> 1.0
 		// QUESTION: S e T são equivalentes a X e Y só que pra texturas 2D? 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		// Tipos de Wrap
+		//   GL_REPEAT:
+		//   GL_MIRRORED_REPEAD:
+		//   GL_CLAMP_TO_EDGE:
+		//   GL_CLAMP_TO_BORDER:
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 		// Carrega a imagem usando a std_image
 		int width, height, numberChannels;
 		const char* path = ASSETS_DIR"/textures/container.jpg"; 
 		unsigned char* data = stbi_load(
 			path,
-			&width, &height, &numberChannels, 3 // esse 3 significa que são 3 canais (RGB)
+			&width, &height, &numberChannels, 3 // esse 3 significa que são 3 canais desejados (RGB)
 		);
 		if(data){
 			// Carrega a textura no GL_TEXTURE_2D bindado
@@ -135,14 +156,16 @@ int main()
 				GL_TEXTURE_2D,    // target
 				0,				  // nível do mipmap a ser carregado
 				GL_RGB,			  // diz o número de componentes de cor na textura
+							      //   como a GPU vai armazenar os dados
 				width, height,    // tamanho da textura
 				0,                // coisa de legado, sempre 0
 				GL_RGB,     	  // formato dos dados
+				                  //   o formato dos dados na CPU
 				GL_UNSIGNED_BYTE, // tipo de dados 
 				data              // ponteiro para os dados em si
 			);
 			// Gera os mipmaps
-			// Texturas com menos detalhes para evitar problemas quando elas são escalonadas
+			// Texturas com menos detalhes para evitar problemas quando elas são reduzidas
 			glGenerateMipmap(GL_TEXTURE_2D);  
 		}
 		else
@@ -192,7 +215,6 @@ int main()
 	}
 	glBindTexture(GL_TEXTURE_2D, 0);
 	
-	
 
 	while(!glfwWindowShouldClose(window))
 	{
@@ -220,6 +242,8 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, texture2);
 		
 		shaderProgram1.setUVi("texture2", 1);
+
+		shaderProgram1.setUVf("mixFactor",mix_factor);
 		
 		glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		
