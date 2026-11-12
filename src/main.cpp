@@ -1,6 +1,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stb_image.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
 #include <string>
@@ -57,10 +60,9 @@ int main()
 {
 	GLFWwindow* window = initWindow(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_NAME);
 
-	ShaderProgram shaderProgram1(
-		ASSETS_DIR"/shaders/texture/texture.vs",
-		ASSETS_DIR"/shaders/texture/texture.fs"
-	);
+	// TODO: Assim que terminar o introduction, acho que vamos ter que abistrair essa parte.
+	//       por enquando vou manter na main
+	// -------------------------------------------------------------------------------------
 
 	// O V Array Object armazena essas configurações 
 	// para cada tipo de objeto que a gente pode ter
@@ -68,13 +70,13 @@ int main()
     // TODO: criar a imagem mental dos objetos GL no excalidraw
 	unsigned int VAO;
 	glGenVertexArrays(1,&VAO);
-
+	
 	// Criar o Vertex Buffer
 	unsigned int VBO;
 	glGenBuffers(1, &VBO);
 	unsigned int EBO;
 	glGenBuffers(1,&EBO);
-
+	
 	glBindVertexArray(VAO);
 	{
 		
@@ -100,22 +102,37 @@ int main()
 			GL_FLOAT,						// Data type de cada componenete
 			GL_FALSE, 						// fala se o dado tem que ser normalizado, entre -1 e 1 para signed e 0 e 1 para unsigned
 											//   só vale pra GL_BYTE E GL_UNSIGNED_BYTE
-			8 * sizeof(float),				// stride, o offset em bytes entre o mesmo atributo em vértices consecutivos
+											8 * sizeof(float),				// stride, o offset em bytes entre o mesmo atributo em vértices consecutivos
 			(void*)(6 * sizeof(float))      // offset inicial para o começo do atributo
 		);
 		glEnableVertexAttribArray(2);		// ativa a configuração 2 efetivamente. pode ser chamado em qqr momento com o VAO bindado
-
+		
 		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, EBO );
 		glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( indices ), indices, GL_STATIC_DRAW );
 	}
 	glBindVertexArray(0);
+	
 
+
+
+
+	ShaderProgram shaderProgram1(
+		ASSETS_DIR"/shaders/transform/transform.vs",
+		ASSETS_DIR"/shaders/transform/transform.fs"
+	);
 	
 	Texture2D boxTexture(ASSETS_DIR"/textures/container.jpg",{
 		.wrap_s = GL_CLAMP_TO_EDGE,
 		.wrap_t = GL_CLAMP_TO_EDGE,
 	});
 	Texture2D faceTexture(ASSETS_DIR"/textures/face.png");
+
+
+	glm::mat4 trans = glm::mat4(1.0f);
+	trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0f,0.0f,1.0f));
+	trans = glm::scale(trans,glm::vec3(0.5f,0.5f,0.5f));
+
+
 
 	while(!glfwWindowShouldClose(window))
 	{

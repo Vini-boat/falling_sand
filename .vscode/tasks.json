@@ -7,6 +7,20 @@
       "command": "cmake --build build",
       "group": { "kind": "build", "isDefault": true },
       "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "doctor",
+      "type": "process",
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/scripts/doctor.ps1"],
+      "problemMatcher": []
+    },
+    {
+      "label": "doctor: fix",
+      "type": "process",
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${workspaceFolder}/scripts/doctor.ps1", "-Fix"],
+      "problemMatcher": []
     }
   ]
 }
