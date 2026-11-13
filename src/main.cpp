@@ -46,10 +46,10 @@ void processInput(GLFWwindow* window)
 
 float vertices[] = {
     // positions          // colors           // texture coords
-     0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   2.0f, 2.0f,   // top right
-     0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   2.0f, 0.0f,   // bottom right
+     0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
+     0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
     -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-    -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 2.0f    // top left 
+    -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
 };
 unsigned int indices[] = {
     0, 1, 3,   // first triangle
@@ -63,7 +63,7 @@ int main()
 	// TODO: Assim que terminar o introduction, acho que vamos ter que abistrair essa parte.
 	//       por enquando vou manter na main
 	// -------------------------------------------------------------------------------------
-
+	
 	// O V Array Object armazena essas configurações 
 	// para cada tipo de objeto que a gente pode ter
 	// essas "configurações" são as chamadas para glBindBuffe
@@ -101,8 +101,8 @@ int main()
 			2, 								// Número de componentes, tem que ser 1,2,3 ou 4 (pq vai virar um vec)
 			GL_FLOAT,						// Data type de cada componenete
 			GL_FALSE, 						// fala se o dado tem que ser normalizado, entre -1 e 1 para signed e 0 e 1 para unsigned
-											//   só vale pra GL_BYTE E GL_UNSIGNED_BYTE
-											8 * sizeof(float),				// stride, o offset em bytes entre o mesmo atributo em vértices consecutivos
+			//   só vale pra GL_BYTE E GL_UNSIGNED_BYTE
+			8 * sizeof(float),				// stride, o offset em bytes entre o mesmo atributo em vértices consecutivos
 			(void*)(6 * sizeof(float))      // offset inicial para o começo do atributo
 		);
 		glEnableVertexAttribArray(2);		// ativa a configuração 2 efetivamente. pode ser chamado em qqr momento com o VAO bindado
@@ -111,11 +111,12 @@ int main()
 		glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( indices ), indices, GL_STATIC_DRAW );
 	}
 	glBindVertexArray(0);
+	// -------------------------------------------------------------------------------------
 	
 
-
-
-
+	
+	
+	
 	ShaderProgram shaderProgram1(
 		ASSETS_DIR"/shaders/transform/transform.vs",
 		ASSETS_DIR"/shaders/transform/transform.fs"
@@ -126,11 +127,6 @@ int main()
 		.wrap_t = GL_CLAMP_TO_EDGE,
 	});
 	Texture2D faceTexture(ASSETS_DIR"/textures/face.png");
-
-
-	glm::mat4 trans = glm::mat4(1.0f);
-	trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0f,0.0f,1.0f));
-	trans = glm::scale(trans,glm::vec3(0.5f,0.5f,0.5f));
 
 
 
@@ -158,6 +154,14 @@ int main()
 		shaderProgram1.setUniform("texture2", 1);
 
 		shaderProgram1.setUniform("mixFactor",mix_factor);
+
+		auto y_axis = glm::vec3(0.0f,0.0f,1.0f);
+		glm::mat4 trans = glm::mat4(1.0f);
+		trans = glm::translate(trans, glm::vec3(0.5f,-0.5f,0.0f));
+		trans = glm::rotate(trans, (float)glfwGetTime(), y_axis);
+
+
+		shaderProgram1.setUniform("transform", trans);
 		
 		glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		

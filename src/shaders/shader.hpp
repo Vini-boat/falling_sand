@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glad/glad.h>
+#include <glm/glm.hpp>
 #include "types.hpp"
 
 #include <string>
@@ -36,5 +37,8 @@ struct ShaderProgram {
         f32 value
     );
 
-
+    void setUniform(
+        const std::string& name,
+        glm::mat4 value
+    );
 };
