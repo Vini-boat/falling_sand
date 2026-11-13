@@ -156,15 +156,26 @@ int main()
 		shaderProgram1.setUniform("mixFactor",mix_factor);
 
 		auto y_axis = glm::vec3(0.0f,0.0f,1.0f);
+		auto time = (float)glfwGetTime();
 		glm::mat4 trans = glm::mat4(1.0f);
 		trans = glm::translate(trans, glm::vec3(0.5f,-0.5f,0.0f));
-		trans = glm::rotate(trans, (float)glfwGetTime(), y_axis);
-
-
+		trans = glm::rotate(trans, time, y_axis);
+		
+		
 		shaderProgram1.setUniform("transform", trans);
 		
 		glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		
+
+		
+		trans = glm::mat4(1.0f);
+		trans = glm::translate(trans, glm::vec3(-0.5f,0.5f,0.0f));
+		auto scalar = (sin(time) / 2.0f) + 0.5f;
+		trans = glm::scale(trans, glm::vec3(scalar));
+		
+		shaderProgram1.setUniform("transform", trans);
+		
+		glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers( window );
 		glfwPollEvents();

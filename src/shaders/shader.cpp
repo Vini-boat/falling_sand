@@ -113,8 +113,8 @@ void ShaderProgram::setUniform(
 ){
     glUniformMatrix4fv(
         glGetUniformLocation(ID,name.c_str()),
-        1,
-        GL_FALSE,
+        1,                      // quantidade de matrizes
+        GL_FALSE,               // Se deve transpor a matriz
         glm::value_ptr(value)
     );
 }
