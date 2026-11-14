@@ -118,8 +118,8 @@ int main()
 	
 	
 	ShaderProgram shaderProgram1(
-		ASSETS_DIR"/shaders/transform/transform.vs",
-		ASSETS_DIR"/shaders/transform/transform.fs"
+		ASSETS_DIR"/shaders/coordinate_systems/coord.vs",
+		ASSETS_DIR"/shaders/coordinate_systems/coord.fs"
 	);
 	
 	Texture2D boxTexture(ASSETS_DIR"/textures/container.jpg",{
@@ -129,9 +129,24 @@ int main()
 	Texture2D faceTexture(ASSETS_DIR"/textures/face.png");
 
 
+	auto x_axis = glm::vec3(1.0f,0.0f,0.0f);
+	auto y_axis = glm::vec3(0.0f,1.0f,0.0f);
+	auto z_axis = glm::vec3(0.0f,0.0f,1.0f);
+
+	auto model = glm::mat4(1.0f);
+	model = glm::rotate(model,glm::radians(-55.0f), x_axis);
+	
+	auto view = glm::mat4(1.0f);
+	view = glm::translate(view, z_axis * -3.0f);
+
+	auto projection = glm::perspective(glm::radians(45.0f), (float)(WINDOW_WIDTH / WINDOW_HEIGHT), 0.1f, 100.0f);
+
+
+
 
 	while(!glfwWindowShouldClose(window))
 	{
+		auto time = (float)glfwGetTime();
 		processInput(window);
 
 		// Render
@@ -155,25 +170,9 @@ int main()
 
 		shaderProgram1.setUniform("mixFactor",mix_factor);
 
-		auto y_axis = glm::vec3(0.0f,0.0f,1.0f);
-		auto time = (float)glfwGetTime();
-		glm::mat4 trans = glm::mat4(1.0f);
-		trans = glm::translate(trans, glm::vec3(0.5f,-0.5f,0.0f));
-		trans = glm::rotate(trans, time, y_axis);
-		
-		
-		shaderProgram1.setUniform("transform", trans);
-		
-		glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-		
-
-		
-		trans = glm::mat4(1.0f);
-		trans = glm::translate(trans, glm::vec3(-0.5f,0.5f,0.0f));
-		auto scalar = (sin(time) / 2.0f) + 0.5f;
-		trans = glm::scale(trans, glm::vec3(scalar));
-		
-		shaderProgram1.setUniform("transform", trans);
+		shaderProgram1.setUniform("model", model);
+		shaderProgram1.setUniform("view", view);
+		shaderProgram1.setUniform("projection", projection);
 		
 		glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
