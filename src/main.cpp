@@ -31,7 +31,12 @@ const auto x_axis = glm::vec3(1.0f,0.0f,0.0f);
 const auto y_axis = glm::vec3(0.0f,1.0f,0.0f);
 const auto z_axis = glm::vec3(0.0f,0.0f,1.0f);
 
-auto camera_pos = z_axis * -3.0f;
+auto cameraPos       = glm::vec3(0.0f,0.0f,3.0f);
+auto cameraFront     = -z_axis;
+auto cameraUp        = y_axis;
+
+auto dt = 0.0f;
+auto time_last_frame = 0.0f;
 
 void processInput(GLFWwindow* window)
 {
@@ -59,20 +64,15 @@ void processInput(GLFWwindow* window)
 		fov = max(0.0f, fov - 0.01f);
 		
 	// camera control
+	auto cameraSpeed = 2.5f * dt;
 	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		camera_pos += z_axis * 0.01f;
+		cameraPos -= cameraFront * cameraSpeed;
 	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera_pos -= z_axis * 0.01f;
+		cameraPos += cameraFront * cameraSpeed;
 	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		camera_pos += x_axis * 0.01f;
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		camera_pos -= x_axis * 0.01f;
-	if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-		camera_pos += y_axis * 0.01f;
-	if(glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-		camera_pos -= y_axis * 0.01f;
-		
-	
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 }
 
 float vertices[] = {
@@ -205,11 +205,11 @@ int main()
 	
 	glEnable(GL_DEPTH_TEST);
 	
-	auto time_last_frame = (float)glfwGetTime();
 	while(!glfwWindowShouldClose(window))
 	{
 		auto time = (float)glfwGetTime();
-		auto dt = time_last_frame - time;
+		dt = time_last_frame - time;
+		time_last_frame = time;
 		
 		processInput(window);
 		
@@ -246,7 +246,8 @@ int main()
 		// Na prática ela muda o transform do mundo inteiro inversamente. 
 		//   Já que virar o mundo pra um lado é a mesma coisa que virar a câmera para o lado oposto
 		auto view = glm::mat4(1.0f);
-		view = glm::translate(view, camera_pos); // essa aqui só faz a câmera estar um pouco pra trás para o objeto não ser clipado
+		view = glm::lookAt(cameraPos,cameraPos + cameraFront, cameraUp);
+		// view = glm::translate(view, cameraPos); // essa aqui só faz a câmera estar um pouco pra trás para o objeto não ser clipado
 		// A projection matrix represenda o "campo de visão" da câmera
 		//   Ela que vai dizer o que está visível ou não.
 		// Na prática ela adiciona a perspectiva. 
