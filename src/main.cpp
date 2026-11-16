@@ -35,6 +35,10 @@ auto cameraPos       = glm::vec3(0.0f,0.0f,3.0f);
 auto cameraFront     = -z_axis;
 auto cameraUp        = y_axis;
 
+
+float cameraYaw   = -90.0f;
+float cameraPitch = 0.0f;
+
 auto dt = 0.0f;
 auto time_last_frame = 0.0f;
 
@@ -70,9 +74,9 @@ void processInput(GLFWwindow* window)
 	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 		cameraPos += cameraFront * cameraSpeed;
 	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 }
 
 float vertices[] = {
@@ -143,10 +147,46 @@ glm::vec3 cubePositions[] = {
     glm::vec3(-1.3f,  1.0f, -1.5f)  
 };
 
+float mouseLastX = WINDOW_WIDTH / 2;
+float mouseLastY = WINDOW_HEIGHT / 2;
+
+bool mousefirst = true;
+void mouse_callback(GLFWwindow* window, double posX, double posY)
+{
+	if(mousefirst){
+		mouseLastX = posX;
+		mouseLastY = posY;
+		mousefirst = false;
+	}
+	
+	float offsetX = posX - mouseLastX;
+	float offsetY = mouseLastY - posY;
+	mouseLastX = posX;
+	mouseLastY = posY;
+	
+	const float sensitivity = 0.1f;
+	offsetX *= sensitivity;
+	offsetY *= sensitivity;
+	
+	cameraYaw += offsetX;
+	cameraPitch = glm::clamp(cameraPitch + offsetY, -89.0f, 89.0f);
+	
+	glm::vec3 cameraDirection;
+	cameraDirection.x = cos(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
+	cameraDirection.y = sin(glm::radians(cameraPitch));
+	cameraDirection.z = sin(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
+	cameraFront = glm::normalize(cameraDirection);
+}
+
+void scroll_callback(GLFWwindow* window, double offsetX, double offsetY){
+	fov = glm::clamp( fov - (float)offsetY, 1.0f, 45.0f);
+}
 int main() 
 {
 	GLFWwindow* window = initWindow(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_NAME);
-
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetScrollCallback(window, scroll_callback);
 	// TODO: Assim que terminar o introduction, acho que vamos ter que abistrair essa parte.
 	//       por enquando vou manter na main
 	// -------------------------------------------------------------------------------------
@@ -233,8 +273,6 @@ int main()
 		shaderProgram1.setUniform("texture2", 1);
 		
 		shaderProgram1.setUniform("mixFactor",mix_factor);
-		
-		
 		// A model matrix representa o "estado" do modelo em relação ao mundo
 		//   Rotação, translação e escalonamento
 		// Na prática ela muda o transform da quele objeto específico
