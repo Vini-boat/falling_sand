@@ -236,8 +236,8 @@ int main()
 	);
 	
 	Texture2D boxTexture(ASSETS_DIR"/textures/container.jpg",{
-		.wrap_s = WrapMode::CLAMP_TO_EDGE,
-		.wrap_t = WrapMode::CLAMP_TO_EDGE,
+		.wrap_s = WrapMode::REPEAT,
+		.wrap_t = WrapMode::REPEAT,
 	});
 	Texture2D faceTexture(ASSETS_DIR"/textures/face.png");
 	
