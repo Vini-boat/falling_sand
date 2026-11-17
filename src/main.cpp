@@ -25,8 +25,6 @@ constexpr int 	 LOG_BUFF_SIZE = 512;
 float mix_factor = 0.2f;
 auto fov = 45.0f;
 
-
-
 const auto x_axis = glm::vec3(1.0f,0.0f,0.0f);
 const auto y_axis = glm::vec3(0.0f,1.0f,0.0f);
 const auto z_axis = glm::vec3(0.0f,0.0f,1.0f);
@@ -273,27 +271,12 @@ int main()
 		shaderProgram1.setUniform("texture2", 1);
 		
 		shaderProgram1.setUniform("mixFactor",mix_factor);
-		// A model matrix representa o "estado" do modelo em relação ao mundo
-		//   Rotação, translação e escalonamento
-		// Na prática ela muda o transform da quele objeto específico
-		// auto model = glm::mat4(1.0f);
-		// model = glm::rotate(model,glm::radians(-55.0f), x_axis); // Essa aqui só faz com que ele seja rotacionado em relação ao eixo x pra parecer estar "deitada"
-		
-		// A view matrix é como se fosse o "estado" da câmera no mundo
-		//  Rotação e translação dela.
-		// Na prática ela muda o transform do mundo inteiro inversamente. 
-		//   Já que virar o mundo pra um lado é a mesma coisa que virar a câmera para o lado oposto
+
 		auto view = glm::mat4(1.0f);
 		view = glm::lookAt(cameraPos,cameraPos + cameraFront, cameraUp);
-		// view = glm::translate(view, cameraPos); // essa aqui só faz a câmera estar um pouco pra trás para o objeto não ser clipado
-		// A projection matrix represenda o "campo de visão" da câmera
-		//   Ela que vai dizer o que está visível ou não.
-		// Na prática ela adiciona a perspectiva. 
-		//  Transformando o frustum em um cubo e também 
-		//  deixa a informação de "distância da câmera" no componente w do vetor.
-		//  Daí a GPU divide (x,y,z) por w, o que faz dar a sensação de perspectiva
+
 		auto projection = glm::perspective(              // serve para descrever o "frustum" (pirâmide truncada de visão)
-			glm::radians(fov),                         // FOV:                     que na prática é o ângulo vertical visível pela câmera 
+			glm::radians(fov),                           // FOV:                     que na prática é o ângulo vertical visível pela câmera 
 			(float)WINDOW_WIDTH / (float)WINDOW_HEIGHT,  // Aspec Ratio:             define a "forma" do monitor 
 			0.1f,                                        // Distância do Near plane: Conceitualmente é a distância do "olho" até a "tela", só o que está depois da tela fica visível
 			100.0f                                       // Distância do Far plane:  Conceitualmente é a distância máxima que o "olho" consegue ver
