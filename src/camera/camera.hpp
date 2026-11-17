@@ -1,9 +1,6 @@
 #pragma once
 
-#include <glad/glad.h>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 struct Camera3D {
     glm::vec3 position;
@@ -13,7 +10,5 @@ struct Camera3D {
     float yaw;
     float pitch;
     float roll;
-
-    glm::vec3 getRight();
 
 };

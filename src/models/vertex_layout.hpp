@@ -15,9 +15,9 @@ namespace VertexDataType {
 
 static constexpr GLsizei sizeOf(VertexDataType::Type type) {
     return type == VertexDataType::FLOAT         ? sizeof(float) :
-        type == VertexDataType::INT           ? sizeof(int) :
-        type == VertexDataType::UNSIGNED_BYTE ? sizeof(unsigned char) :
-        type == VertexDataType::DOUBLE        ? sizeof(double) : 4;
+           type == VertexDataType::INT           ? sizeof(int) :
+           type == VertexDataType::UNSIGNED_BYTE ? sizeof(unsigned char) :
+           type == VertexDataType::DOUBLE        ? sizeof(double) : 4;
 };
     
 struct VertexLayoutAttributes {

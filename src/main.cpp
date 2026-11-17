@@ -5,12 +5,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <iostream>
 #include <string>
 #include <math.h>
 
 #include "window/window.hpp"
-#include "types.hpp"
 #include "models/vertex_layout.hpp"
 #include "shaders/shader.hpp"
 #include "textures/texture2d.hpp"
@@ -62,7 +60,7 @@ void processInput(GLFWwindow* window)
 	// Muda o fov
 	if(glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
 		fov = min(180.0f, fov + 0.01f);
-		if(glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)
+	if(glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)
 		fov = max(0.0f, fov - 0.01f);
 		
 	// camera control
@@ -145,8 +143,8 @@ glm::vec3 cubePositions[] = {
     glm::vec3(-1.3f,  1.0f, -1.5f)  
 };
 
-float mouseLastX = WINDOW_WIDTH / 2;
-float mouseLastY = WINDOW_HEIGHT / 2;
+float mouseLastX = (float) WINDOW_WIDTH / 2;
+float mouseLastY = (float) WINDOW_HEIGHT / 2;
 
 bool mousefirst = true;
 void mouse_callback(GLFWwindow* window, double posX, double posY)
@@ -237,7 +235,7 @@ int main()
 	
 	Texture2D boxTexture(ASSETS_DIR"/textures/container.jpg",{
 		.wrap_s = WrapMode::REPEAT,
-		.wrap_t = WrapMode::REPEAT,
+		.wrap_t = WrapMode::REPEAT
 	});
 	Texture2D faceTexture(ASSETS_DIR"/textures/face.png");
 	
@@ -275,7 +273,7 @@ int main()
 		auto view = glm::mat4(1.0f);
 		view = glm::lookAt(cameraPos,cameraPos + cameraFront, cameraUp);
 
-		auto projection = glm::perspective(              // serve para descrever o "frustum" (pirâmide truncada de visão)
+		glm::mat4 projection = glm::perspective(              // serve para descrever o "frustum" (pirâmide truncada de visão)
 			glm::radians(fov),                           // FOV:                     que na prática é o ângulo vertical visível pela câmera 
 			(float)WINDOW_WIDTH / (float)WINDOW_HEIGHT,  // Aspec Ratio:             define a "forma" do monitor 
 			0.1f,                                        // Distância do Near plane: Conceitualmente é a distância do "olho" até a "tela", só o que está depois da tela fica visível
