@@ -12,6 +12,7 @@
 #include "models/vertex_layout.hpp"
 #include "shaders/shader.hpp"
 #include "textures/texture2d.hpp"
+#include "camera/camera.hpp"
 
 using namespace std;
 
@@ -21,19 +22,17 @@ constexpr char   WINDOW_NAME[] = "Hello, Window";
 constexpr int 	 LOG_BUFF_SIZE = 512;
 
 float mix_factor = 0.2f;
-auto fov = 45.0f;
 
 const auto x_axis = glm::vec3(1.0f,0.0f,0.0f);
 const auto y_axis = glm::vec3(0.0f,1.0f,0.0f);
 const auto z_axis = glm::vec3(0.0f,0.0f,1.0f);
 
-auto cameraPos       = glm::vec3(0.0f,0.0f,3.0f);
-auto cameraFront     = -z_axis;
-auto cameraUp        = y_axis;
-
-
-float cameraYaw   = -90.0f;
-float cameraPitch = 0.0f;
+Camera3D camera(
+	glm::vec3(0.0f,0.0f,3.0f),
+	-z_axis,
+	y_axis,
+	(float)WINDOW_WIDTH / (float)WINDOW_HEIGHT
+);
 
 auto dt = 0.0f;
 auto time_last_frame = 0.0f;
@@ -59,20 +58,20 @@ void processInput(GLFWwindow* window)
 
 	// Muda o fov
 	if(glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
-		fov = min(180.0f, fov + 0.01f);
+		camera.fov = min(180.0f, camera.fov + 0.01f);
 	if(glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)
-		fov = max(0.0f, fov - 0.01f);
+		camera.fov = max(0.0f, camera.fov - 0.01f);
 		
 	// camera control
-	auto cameraSpeed = 2.5f * dt;
 	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		cameraPos -= cameraFront * cameraSpeed;
+		camera.move(Camera3D::FRONT, dt);
 	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		cameraPos += cameraFront * cameraSpeed;
+		camera.move(Camera3D::BACK, dt);	
 	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		camera.move(Camera3D::LEFT, dt);
 	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+		camera.move(Camera3D::RIGHT, dt);
+
 }
 
 float vertices[] = {
@@ -159,23 +158,11 @@ void mouse_callback(GLFWwindow* window, double posX, double posY)
 	float offsetY = mouseLastY - posY;
 	mouseLastX = posX;
 	mouseLastY = posY;
-	
-	const float sensitivity = 0.1f;
-	offsetX *= sensitivity;
-	offsetY *= sensitivity;
-	
-	cameraYaw += offsetX;
-	cameraPitch = glm::clamp(cameraPitch + offsetY, -89.0f, 89.0f);
-	
-	glm::vec3 cameraDirection;
-	cameraDirection.x = cos(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
-	cameraDirection.y = sin(glm::radians(cameraPitch));
-	cameraDirection.z = sin(glm::radians(cameraYaw)) * cos(glm::radians(cameraPitch));
-	cameraFront = glm::normalize(cameraDirection);
+	camera.rotate({offsetX,offsetY});
 }
 
 void scroll_callback(GLFWwindow* window, double offsetX, double offsetY){
-	fov = glm::clamp( fov - (float)offsetY, 1.0f, 45.0f);
+	camera.fov = glm::clamp( camera.fov - (float)offsetY * 0.1f, 1.0f, 45.0f);
 }
 int main() 
 {
@@ -183,16 +170,7 @@ int main()
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
-	// TODO: Assim que terminar o introduction, acho que vamos ter que abistrair essa parte.
-	//       por enquando vou manter na main
-	// -------------------------------------------------------------------------------------
-	
-	// O V Array Object armazena essas configurações 
-	// para cada tipo de objeto que a gente pode ter
-	// essas "configurações" são as chamadas para glBindBuffe
-    // TODO: criar a imagem mental dos objetos GL no excalidraw
-	
-	// Criar o Vertex Buffer
+
 	unsigned int VBO;
 	glGenBuffers(1, &VBO);
 	unsigned int EBO;
@@ -201,17 +179,10 @@ int main()
 	VertexLayout VAO;
 	VAO.bind();
 	{
-		
-		// Carregar os dados para o Vertex Buffer CPU -> GPU
-		// Expecifica o tipo de buffer a ser bindado
-		//   pode ser: GL_ARRAY_BUFFER ou GL_ELEMENT_ARRAY_BUFFER comummente (existem outros)
+
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-		// Configura como interpretar os atributos do vertex shader
-		// Que estão no VBO
 
-		// Tem que ser chamado depois de bindar o VBO
-		// já que vai setar o layout daquele Buffer
 		VAO.setLayout(
 			{
 				{.qtdComponents = 3},
@@ -270,15 +241,9 @@ int main()
 		
 		shaderProgram1.setUniform("mixFactor",mix_factor);
 
-		auto view = glm::mat4(1.0f);
-		view = glm::lookAt(cameraPos,cameraPos + cameraFront, cameraUp);
+		glm::mat4 view = camera.getView();
 
-		glm::mat4 projection = glm::perspective(              // serve para descrever o "frustum" (pirâmide truncada de visão)
-			glm::radians(fov),                           // FOV:                     que na prática é o ângulo vertical visível pela câmera 
-			(float)WINDOW_WIDTH / (float)WINDOW_HEIGHT,  // Aspec Ratio:             define a "forma" do monitor 
-			0.1f,                                        // Distância do Near plane: Conceitualmente é a distância do "olho" até a "tela", só o que está depois da tela fica visível
-			100.0f                                       // Distância do Far plane:  Conceitualmente é a distância máxima que o "olho" consegue ver
-		);
+		glm::mat4 projection = camera.getProjection();
 		
 		shaderProgram1.setUniform("view", view);
 		shaderProgram1.setUniform("projection", projection);
