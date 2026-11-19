@@ -1,0 +1,285 @@
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <stb_image.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include <string>
+#include <math.h>
+
+#include "window/window.hpp"
+#include "models/vertex_layout.hpp"
+#include "shaders/shader.hpp"
+#include "textures/texture2d.hpp"
+#include "camera/camera.hpp"
+
+using namespace std;
+
+constexpr int    WINDOW_WIDTH  = 800;
+constexpr int    WINDOW_HEIGHT = 600;
+constexpr char   WINDOW_NAME[] = "Hello, Window";
+constexpr int 	 LOG_BUFF_SIZE = 512;
+
+float mix_factor = 0.2f;
+
+const auto x_axis = glm::vec3(1.0f,0.0f,0.0f);
+const auto y_axis = glm::vec3(0.0f,1.0f,0.0f);
+const auto z_axis = glm::vec3(0.0f,0.0f,1.0f);
+
+Camera camera(
+	glm::vec3(0.0f,0.0f,3.0f),
+	-z_axis,
+	y_axis,
+	(float)WINDOW_WIDTH / (float)WINDOW_HEIGHT
+);
+
+auto dt = 0.0f;
+auto time_last_frame = 0.0f;
+
+void processInput(GLFWwindow* window)
+{
+	// Fechar a janela
+	if(glfwGetKey(window,GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(window,true);
+
+	// Trocar o modo para só as linhas
+	if(glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+		glPolygonMode(GL_FRONT_AND_BACK , GL_LINE);
+
+	if(glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+		glPolygonMode(GL_FRONT_AND_BACK , GL_FILL);
+	
+	// Trocar a proporção de mix das texturas
+	if(glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS)
+		mix_factor = min(1.0f, mix_factor + 0.001f);
+	if(glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)
+		mix_factor = max(0.0f, mix_factor - 0.001f);
+
+	// Muda o fov
+	if(glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
+		camera.fov = min(180.0f, camera.fov + 0.01f);
+	if(glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)
+		camera.fov = max(0.0f, camera.fov - 0.01f);
+		
+	// camera control
+	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		camera.move(Camera::FRONT, dt);
+	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera.move(Camera::BACK, dt);	
+	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		camera.move(Camera::LEFT, dt);
+	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		camera.move(Camera::RIGHT, dt);
+
+}
+
+float vertices[] = {
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+};
+// float vertices[] = {
+//     // positions          // colors           // texture coords
+//      0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
+//      0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
+//     -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
+//     -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
+// };
+// unsigned int indices[] = {
+//     0, 1, 3,   // first triangle
+//     1, 2, 3    // second triangle
+// }; 
+
+glm::vec3 cubePositions[] = {
+    glm::vec3( 0.0f,  0.0f,  0.0f), 
+    glm::vec3( 2.0f,  5.0f, -15.0f), 
+    glm::vec3(-1.5f, -2.2f, -2.5f),  
+    glm::vec3(-3.8f, -2.0f, -12.3f),  
+    glm::vec3( 2.4f, -0.4f, -3.5f),  
+    glm::vec3(-1.7f,  3.0f, -7.5f),  
+    glm::vec3( 1.3f, -2.0f, -2.5f),  
+    glm::vec3( 1.5f,  2.0f, -2.5f), 
+    glm::vec3( 1.5f,  0.2f, -1.5f), 
+    glm::vec3(-1.3f,  1.0f, -1.5f)  
+};
+
+float mouseLastX = (float) WINDOW_WIDTH / 2;
+float mouseLastY = (float) WINDOW_HEIGHT / 2;
+
+bool mousefirst = true;
+void mouse_callback(GLFWwindow* window, double posX, double posY)
+{
+	if(mousefirst){
+		mouseLastX = posX;
+		mouseLastY = posY;
+		mousefirst = false;
+	}
+	
+	float offsetX = posX - mouseLastX;
+	float offsetY = mouseLastY - posY;
+	mouseLastX = posX;
+	mouseLastY = posY;
+	camera.rotate({offsetX,offsetY});
+}
+
+void scroll_callback(GLFWwindow* window, double offsetX, double offsetY){
+	camera.fov = glm::clamp( camera.fov - (float)offsetY * 0.1f, 1.0f, 45.0f);
+}
+
+void resize_callback(GLFWwindow* window, int w, int h)
+{
+	glViewport(0,0,w,h);
+	camera.aspect_ratio = (float)w / (float)h;
+}
+
+int main() 
+{
+	GLFWwindow* window = initWindow(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_NAME, resize_callback);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetScrollCallback(window, scroll_callback);
+
+	unsigned int VBO;
+	glGenBuffers(1, &VBO);
+	unsigned int EBO;
+	glGenBuffers(1,&EBO);
+	
+	VertexLayout VAO;
+	VAO.bind();
+	{
+
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+		VAO.setLayout(
+			{
+				{.qtdComponents = 3},
+				{.qtdComponents = 2}
+			}	
+		);
+
+		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, EBO );
+		// glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( indices ), indices, GL_STATIC_DRAW );
+	}
+	glBindVertexArray(0);
+	
+
+	
+	
+	
+	ShaderProgram shaderProgram1(
+		ASSETS_DIR"/shaders/coordinate_systems/coord.vs",
+		ASSETS_DIR"/shaders/coordinate_systems/coord.fs"
+	);
+	
+	Texture2D boxTexture(ASSETS_DIR"/textures/container.jpg",{
+		.wrap_s = WrapMode::REPEAT,
+		.wrap_t = WrapMode::REPEAT
+	});
+	Texture2D faceTexture(ASSETS_DIR"/textures/face.png");
+	
+	glEnable(GL_DEPTH_TEST);
+	
+	while(!glfwWindowShouldClose(window))
+	{
+		auto time = (float)glfwGetTime();
+		dt = time_last_frame - time;
+		time_last_frame = time;
+		
+		processInput(window);
+		
+		// Render
+		glClearColor( 0.2f, 0.3f, 0.3f, 1.0f );
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // escolhe qual dos buffers que vai dar clear
+		
+		shaderProgram1.use();
+		VAO.bind();
+		
+		// Tem essas texture units
+		// elas são targets que podem ser ativos para o 
+		//   shader poder usar várias texturas ao mesmo tempo
+		glActiveTexture(GL_TEXTURE0);
+		boxTexture.bind();
+		// tem que passar o id do texture unit para o uniform sempler poder usar
+		shaderProgram1.setUniform("texture1", 0);
+		
+		glActiveTexture(GL_TEXTURE1);
+		faceTexture.bind();
+		shaderProgram1.setUniform("texture2", 1);
+		
+		shaderProgram1.setUniform("mixFactor",mix_factor);
+
+		glm::mat4 view = camera.getView();
+
+		glm::mat4 projection = camera.getProjection(Camera::PERSPECTIVE);
+		
+		shaderProgram1.setUniform("view", view);
+		shaderProgram1.setUniform("projection", projection);
+		for(int i =0; i < 10; i++)
+		{
+			auto model = glm::mat4(1.0f);
+			model = glm::translate(model, cubePositions[i]);
+			auto angle = 20.0f * (i+1);
+			if(i % 3 == 0){
+				model = glm::rotate(model,glm::radians(angle)*time,glm::vec3(1.0f,0.3f,0.5f));
+
+			} else 
+			{
+				model = glm::rotate(model,glm::radians(angle),glm::vec3(1.0f,0.3f,0.5f));
+			}
+
+			shaderProgram1.setUniform("model", model);
+			glDrawArrays(GL_TRIANGLES,0,36);
+		}
+
+
+
+		
+		// glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+		glfwSwapBuffers( window );
+		glfwPollEvents();
+	}
+	
+	glfwTerminate();
+	return 0;
+}
