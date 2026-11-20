@@ -3,7 +3,7 @@
 #include <glm/glm.hpp>
 
 
-struct Camera3D {
+struct Camera {
     glm::vec3 position;
     glm::vec3 front;
     glm::vec3 up;
@@ -30,7 +30,7 @@ struct Camera3D {
         RIGHT
     };
 
-    Camera3D(
+    Camera(
         glm::vec3 pos, 
         glm::vec3 front, 
         glm::vec3 up,
@@ -43,7 +43,12 @@ struct Camera3D {
 
     glm::mat4 getView();
 
-    glm::mat4 getProjection();
+    enum Mode {
+        ORTHOGONAL,
+        PERSPECTIVE
+    };
+
+    glm::mat4 getProjection(Mode mode);
 
     private:
         void recalculateVectors();

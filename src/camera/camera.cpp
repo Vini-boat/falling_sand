@@ -7,7 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-Camera3D::Camera3D(
+Camera::Camera(
     glm::vec3 pos, 
     glm::vec3 front, 
     glm::vec3 up,
@@ -20,11 +20,11 @@ Camera3D::Camera3D(
     recalculateVectors();
 }
 
-void Camera3D::recalculateVectors(){
+void Camera::recalculateVectors(){
     right        = glm::normalize(glm::cross(front, up));
 }
 
-void Camera3D::move(Camera3D::Direction dir, float dt){
+void Camera::move(Camera::Direction dir, float dt){
     switch (dir) {
         case FRONT: position -= front * speed * dt ; break;
         case BACK:  position += front * speed * dt ; break;
@@ -33,7 +33,7 @@ void Camera3D::move(Camera3D::Direction dir, float dt){
     };
 }
 
-void Camera3D::rotate(glm::vec2 screen_offset){
+void Camera::rotate(glm::vec2 screen_offset){
     auto offset = screen_offset * sensitivty;
 
     yaw  += offset.x;
@@ -49,10 +49,19 @@ void Camera3D::rotate(glm::vec2 screen_offset){
     recalculateVectors();
 }
 
-glm::mat4 Camera3D::getView(){
+glm::mat4 Camera::getView(){
     return glm::lookAt(position, position + front, up);
 }
 
-glm::mat4 Camera3D::getProjection(){
-    return glm::perspective(fov, aspect_ratio, z_near, z_far);
+glm::mat4 Camera::getProjection(Camera::Mode mode){
+    float halfH = 5.0f;
+    float halfW = halfH * aspect_ratio;
+    switch (mode) {
+        case ORTHOGONAL:
+            return glm::ortho(-halfW,halfW,-halfH,halfH,z_near, z_far); 
+            break;
+        case PERSPECTIVE: 
+            return glm::perspective(fov, aspect_ratio, z_near, z_far);
+            break;
+    }
 }

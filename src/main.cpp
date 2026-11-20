@@ -27,7 +27,7 @@ const auto x_axis = glm::vec3(1.0f,0.0f,0.0f);
 const auto y_axis = glm::vec3(0.0f,1.0f,0.0f);
 const auto z_axis = glm::vec3(0.0f,0.0f,1.0f);
 
-Camera3D camera(
+Camera camera(
 	glm::vec3(0.0f,0.0f,3.0f),
 	-z_axis,
 	y_axis,
@@ -64,13 +64,13 @@ void processInput(GLFWwindow* window)
 		
 	// camera control
 	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		camera.move(Camera3D::FRONT, dt);
+		camera.move(Camera::FRONT, dt);
 	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		camera.move(Camera3D::BACK, dt);	
+		camera.move(Camera::BACK, dt);	
 	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		camera.move(Camera3D::LEFT, dt);
+		camera.move(Camera::LEFT, dt);
 	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		camera.move(Camera3D::RIGHT, dt);
+		camera.move(Camera::RIGHT, dt);
 
 }
 
@@ -164,9 +164,16 @@ void mouse_callback(GLFWwindow* window, double posX, double posY)
 void scroll_callback(GLFWwindow* window, double offsetX, double offsetY){
 	camera.fov = glm::clamp( camera.fov - (float)offsetY * 0.1f, 1.0f, 45.0f);
 }
+
+void resize_callback(GLFWwindow* window, int w, int h)
+{
+	glViewport(0,0,w,h);
+	camera.aspect_ratio = (float)w / (float)h;
+}
+
 int main() 
 {
-	GLFWwindow* window = initWindow(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_NAME);
+	GLFWwindow* window = initWindow(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_NAME, resize_callback);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
@@ -243,7 +250,7 @@ int main()
 
 		glm::mat4 view = camera.getView();
 
-		glm::mat4 projection = camera.getProjection();
+		glm::mat4 projection = camera.getProjection(Camera::PERSPECTIVE);
 		
 		shaderProgram1.setUniform("view", view);
 		shaderProgram1.setUniform("projection", projection);
