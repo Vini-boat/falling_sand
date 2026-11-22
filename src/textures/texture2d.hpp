@@ -32,6 +32,31 @@ struct Texture2DParameters {
     bool       flip_y      = true;
 };
 
+namespace InternalFormat {
+    enum InternalFormat : GLenum {
+
+    };
+}
+
+namespace Format {
+    enum Format : GLenum {
+
+    };
+}
+
+namespace FormatDataType {
+    enum FormatDataType : GLenum {
+
+    };
+}
+
+
+struct Texture2DFormat {
+    GLenum internal,
+    GLenum format,
+    GLenum type;
+};
+
 struct Texture2D {
     glID ID;
 
@@ -40,5 +65,5 @@ struct Texture2D {
         const Texture2DParameters& params = {}
     );
 
-    void bind();
+    void bind(unsigned int texture_unit);
 };

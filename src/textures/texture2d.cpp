@@ -41,9 +41,8 @@ Texture2D::Texture2D(
 			);
 			// Gera os mipmaps
 			// Texturas com menos detalhes para evitar problemas quando elas são reduzidas
-			glGenerateMipmap(GL_TEXTURE_2D);  
-		}
-		else
+			if(params.gen_mipmaps) glGenerateMipmap(GL_TEXTURE_2D);  
+		}else
 		{
 			std::cout << "ERROR::TEXTURE::FAILED_TO_LOAD" << std::endl;
 			std::cout << path << std::endl; 
@@ -55,6 +54,7 @@ Texture2D::Texture2D(
     glBindTexture(GL_TEXTURE_2D, 0);
 };
 
-void Texture2D::bind(){
+void Texture2D::bind(unsigned int texture_unit){
+	glActiveTexture(GL_TEXTURE0 + texture_unit);
     glBindTexture(GL_TEXTURE_2D, ID);
 }
