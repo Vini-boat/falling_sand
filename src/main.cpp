@@ -8,6 +8,8 @@
 #include <string>
 #include <math.h>
 
+#include "glm/ext/vector_uint4_sized.hpp"
+#include "types.hpp"
 #include "window/window.hpp"
 #include "models/vertex_layout.hpp"
 #include "shaders/shader.hpp"
@@ -16,8 +18,8 @@
 
 using namespace std;
 
-constexpr int    WINDOW_WIDTH  = 800;
-constexpr int    WINDOW_HEIGHT = 600;
+constexpr int    WINDOW_WIDTH  = 512;
+constexpr int    WINDOW_HEIGHT = 512;
 constexpr char   WINDOW_NAME[] = "Hello, Window";
 constexpr int 	 LOG_BUFF_SIZE = 512;
 
@@ -46,9 +48,14 @@ int indices[] = {
 	0,1,2,
 	2,3,0
 };
+	
+constexpr int W = 256;
+constexpr int H = 256;
+glm::u8vec4 colors[W*H];
 
 int main() 
 {
+	for(auto& c : colors) c = glm::u8vec4(0,0,0,255);
 	GLFWwindow* window = initWindow(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_NAME);
 
 	unsigned int VBO;
@@ -80,9 +87,37 @@ int main()
 		ASSETS_DIR"/shaders/simulation/sim.vs",
 		ASSETS_DIR"/shaders/simulation/sim.fs"
 	);
+
+	
+	glID tela; 
+	{
+		auto target = GL_TEXTURE_2D;
+		auto filter = GL_NEAREST;
+		auto wrap = GL_REPEAT;
+		auto level = 0;
+		
+		glGenTextures(1,&tela);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(target, tela);
+		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filter);
+	    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter); 
+        glTexParameteri(target, GL_TEXTURE_WRAP_S, wrap);	
+		glTexParameteri(target, GL_TEXTURE_WRAP_T, wrap);
 	
 
-	shaderProgram1.setUniform("paleta", 1);
+		glTexImage2D(
+			target,
+			level,
+			GL_RGBA,
+			W, H,
+			0,
+			GL_RGBA,
+			GL_UNSIGNED_BYTE,
+			colors
+		);
+
+	}
 
 	while(!glfwWindowShouldClose(window))
 	{
@@ -97,9 +132,13 @@ int main()
 		glClear( GL_COLOR_BUFFER_BIT);
 		
 		shaderProgram1.use();
+		
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, tela);
+		shaderProgram1.setUniform("color", 0);
+		
 		VAO.bind();
-
-		shaderProgram1.setUniform("tela", 0);
+		glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers( window );
 		glfwPollEvents();

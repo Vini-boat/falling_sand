@@ -52,8 +52,8 @@ namespace FormatDataType {
 
 
 struct Texture2DFormat {
-    GLenum internal,
-    GLenum format,
+    GLenum internal;
+    GLenum format;
     GLenum type;
 };
 

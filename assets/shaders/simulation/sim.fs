@@ -2,12 +2,11 @@
 
 in  vec2 uv; 
 
-uniform usampler2D tela;
-uniform sampler1D paleta;
+uniform sampler2D color;
 
 out vec4 FragColor;
 
 void main()
 {
-    FragColor = texture(tela,uv);
+    FragColor = texture(color,uv);
 }

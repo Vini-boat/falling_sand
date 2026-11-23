@@ -57,4 +57,4 @@ Texture2D::Texture2D(
 void Texture2D::bind(unsigned int texture_unit){
 	glActiveTexture(GL_TEXTURE0 + texture_unit);
     glBindTexture(GL_TEXTURE_2D, ID);
-}
+};
