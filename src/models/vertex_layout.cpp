@@ -2,11 +2,14 @@
 #include <glad/glad.h>
 #include "types.hpp"
 #include <assert.h>
+#include "logger/logger.hpp"
+#include <format>
 
-
+inline Logger _log;
 
 VertexLayout::VertexLayout(){    
     glGenVertexArrays(1, &ID);
+    _log.info(std::format("VertexLayout ({}) generated", ID));
 }
 
 void VertexLayout::setLayout(

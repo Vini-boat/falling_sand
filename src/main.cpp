@@ -8,6 +8,7 @@
 #include <string>
 #include <math.h>
 #include <random>
+#include <format>
 
 #include "glm/ext/vector_uint4_sized.hpp"
 #include "types.hpp"
@@ -18,6 +19,7 @@
 #include "camera/camera.hpp"
 #include "logger/logger.hpp"
 
+inline Logger _log;
 std::mt19937 rng(std::random_device{}());
 
 using namespace std;
@@ -79,16 +81,15 @@ void mouse_callback(GLFWwindow* window, double posX, double posY)
 	mouse_pos = {posX,posY};
 }
 
-Logger _log;
+void error_callback(int error, const char* description) {
+    _log.error(format("GLFW: error code: {}: {}", error, description));
+}
 
 int main() 
 {
 	for(auto& c : colors) c = AIR;
 
-	_log.info("test 1");
-	_log.warn("test 2");
-	_log.error("test 3");
-
+	glfwSetErrorCallback(error_callback);
 	GLFWwindow* window = initWindow(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_NAME);
 	glfwSetCursorPosCallback(window, mouse_callback);
 
@@ -216,13 +217,13 @@ int main()
 		tela.update(colors, W, H, 0, 0);
 		
 		tela.bind(0);
+		shaderProgram1.use();
 		shaderProgram1.setUniform("color", 0);
 		
 
 		glClearColor( 0.2f, 0.3f, 0.3f, 1.0f );
 		glClear( GL_COLOR_BUFFER_BIT);
 		
-		shaderProgram1.use();
 		
 		
 		VAO.bind();

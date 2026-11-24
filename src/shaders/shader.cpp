@@ -10,9 +10,10 @@
 
 #include "utils/utils.hpp"
 #include "types.hpp"
+#include "logger/logger.hpp"
+#include <format>
 
-
-constexpr int LOG_BUFF_SIZE = 512;
+inline Logger _log;
 
 ShaderProgram::ShaderProgram(
     const char* vertexShaderPath,
@@ -31,12 +32,15 @@ ShaderProgram::ShaderProgram(
             int ok;
             glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &ok);
             if(!ok){
-                char log[LOG_BUFF_SIZE];
-                glGetShaderInfoLog(vertexShader, LOG_BUFF_SIZE, NULL, log);
-                std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED" << std::endl;
-			    std::cout << log << std::endl;
+                int size = 0;
+                glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &size);
+                std::string msg;
+                msg.resize(size);
+                glGetShaderInfoLog(vertexShader, size, NULL, msg.data());
+                _log.error(std::format("SHADER: error compiling file {}: \n{}",vertexShaderPath, msg));
             }
         }
+        _log.info(std::format("SHADER: compiled {}",vertexShaderPath));
         
         const char* f_src = fragmentShaderSourceCode.c_str();
         glShaderSource( fragmentShader, 1, &f_src, NULL);
@@ -45,14 +49,19 @@ ShaderProgram::ShaderProgram(
             int ok;
             glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &ok);
             if(!ok){
-                char log[LOG_BUFF_SIZE];
-                glGetShaderInfoLog(fragmentShader, LOG_BUFF_SIZE, NULL, log);
-                std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED" << std::endl;
-			    std::cout << log << std::endl;
+                int size = 0;
+                glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &size);
+                std::string msg;
+                msg.resize(size);
+                glGetShaderInfoLog(fragmentShader, size, NULL, msg.data());
+                _log.error(std::format("SHADER: error compiling file {}: \n{}",fragmentShaderPath, msg));
             }
         }
-
+        _log.info(std::format("SHADER: compiled {}",fragmentShaderPath));
+        
+        
         ID = glCreateProgram();
+        _log.info(std::format("SHADER: created program {}", ID));
         glAttachShader(ID, vertexShader);
         glAttachShader(ID, fragmentShader);
         glLinkProgram(ID);
@@ -60,12 +69,15 @@ ShaderProgram::ShaderProgram(
             int ok;
             glGetProgramiv(ID, GL_LINK_STATUS, &ok);
             if(!ok){
-                char log[LOG_BUFF_SIZE];
-                glGetProgramInfoLog(ID,LOG_BUFF_SIZE,NULL,log);
-                std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED" << std::endl;
-			    std::cout << log << std::endl;
+                int size = 0;
+                glGetProgramiv(ID, GL_INFO_LOG_LENGTH, &size);
+                std::string msg; msg.resize(size);
+                glGetProgramInfoLog(ID,size,NULL,msg.data());
+                _log.error(std::format("SHADER: linking program {}: \n{}",ID,msg));
             }
         }
+        _log.info(std::format("SHADER: ID {}, linked shaders", ID));
+
     }
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);

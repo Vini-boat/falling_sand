@@ -4,7 +4,7 @@
 #include <source_location>
 
 struct Logger {
-
+    
     void info(std::string msg,
         std::source_location loc = std::source_location::current()
     );
