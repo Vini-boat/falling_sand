@@ -1,2 +1,4 @@
 InlayHints:
   Designators: No
+CompileFlags:
+  Add: [-std=gnu++20]

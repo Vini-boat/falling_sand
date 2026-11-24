@@ -7,6 +7,7 @@
 
 #include <string>
 #include <math.h>
+#include <random>
 
 #include "glm/ext/vector_uint4_sized.hpp"
 #include "types.hpp"
@@ -15,7 +16,7 @@
 #include "shaders/shader.hpp"
 #include "textures/texture2d.hpp"
 #include "camera/camera.hpp"
-#include <random>
+#include "logger/logger.hpp"
 
 std::mt19937 rng(std::random_device{}());
 
@@ -78,9 +79,15 @@ void mouse_callback(GLFWwindow* window, double posX, double posY)
 	mouse_pos = {posX,posY};
 }
 
+Logger _log;
+
 int main() 
 {
 	for(auto& c : colors) c = AIR;
+
+	_log.info("test 1");
+	_log.warn("test 2");
+	_log.error("test 3");
 
 	GLFWwindow* window = initWindow(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_NAME);
 	glfwSetCursorPosCallback(window, mouse_callback);
@@ -208,14 +215,15 @@ int main()
 		tela.bind(0);
 		tela.update(colors, W, H, 0, 0);
 		
+		tela.bind(0);
+		shaderProgram1.setUniform("color", 0);
+		
 
 		glClearColor( 0.2f, 0.3f, 0.3f, 1.0f );
 		glClear( GL_COLOR_BUFFER_BIT);
 		
 		shaderProgram1.use();
 		
-		tela.bind(0);
-		shaderProgram1.setUniform("color", 0);
 		
 		VAO.bind();
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
