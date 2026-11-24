@@ -3,9 +3,6 @@
 #include "types.hpp"
 #include <assert.h>
 #include "logger/logger.hpp"
-#include <format>
-
-inline Logger _log;
 
 VertexLayout::VertexLayout(){    
     glGenVertexArrays(1, &ID);

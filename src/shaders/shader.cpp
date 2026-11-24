@@ -11,9 +11,6 @@
 #include "utils/utils.hpp"
 #include "types.hpp"
 #include "logger/logger.hpp"
-#include <format>
-
-inline Logger _log;
 
 ShaderProgram::ShaderProgram(
     const char* vertexShaderPath,

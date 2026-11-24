@@ -4,8 +4,6 @@
 #include "assert.h"
 #include "logger/logger.hpp"
 
-inline Logger _log;
-
 GLFWwindow* initWindow(
     int width,int height, 
     const char* title, 

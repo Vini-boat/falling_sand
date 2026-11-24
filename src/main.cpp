@@ -8,7 +8,6 @@
 #include <string>
 #include <math.h>
 #include <random>
-#include <format>
 
 #include "glm/ext/vector_uint4_sized.hpp"
 #include "types.hpp"
@@ -19,7 +18,6 @@
 #include "camera/camera.hpp"
 #include "logger/logger.hpp"
 
-inline Logger _log;
 std::mt19937 rng(std::random_device{}());
 
 using namespace std;

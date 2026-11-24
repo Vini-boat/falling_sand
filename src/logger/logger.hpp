@@ -2,9 +2,10 @@
 
 #include <string>
 #include <source_location>
+#include <format>
 
 struct Logger {
-    
+
     void info(std::string msg,
         std::source_location loc = std::source_location::current()
     );
@@ -23,3 +24,5 @@ struct Logger {
             static constexpr const char* error = "\033[97;41m";
         };
 };
+
+inline Logger _log;
