@@ -7,5 +7,5 @@ out vec2 uv;
 void main()
 {
     gl_Position = vec4(aPos, 0.0f, 1.0f);
-    uv = vec2(aUV.x,-aUV.y); // inverte o y
+    uv = vec2(aUV.x, 1.0f -aUV.y); // inverte o y
 }

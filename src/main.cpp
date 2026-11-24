@@ -47,7 +47,7 @@ float quad[] = {
 	 1.0f,  1.0f,  1.0f, 1.0f,
 	-1.0f,  1.0f,  0.0f, 1.0f,
 };
-int indices[] = {
+unsigned int indices[] = {
 	0,1,2,
 	2,3,0
 };
@@ -115,36 +115,12 @@ int main()
 		ASSETS_DIR"/shaders/simulation/sim.fs"
 	);
 
-	
-	glID tela; 
-	{
-		auto target = GL_TEXTURE_2D;
-		auto filter = GL_NEAREST;
-		auto wrap = GL_REPEAT;
-		auto level = 0;
-		
-		glGenTextures(1,&tela);
+	Texture2D tela(colors,W,H, {
+		.min_filter = FilterMode::NEAREST,
+		.mag_filter = FilterMode::NEAREST,
+		.gen_mipmaps = false
+	});
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(target, tela);
-		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, filter);
-	    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, filter); 
-        glTexParameteri(target, GL_TEXTURE_WRAP_S, wrap);	
-		glTexParameteri(target, GL_TEXTURE_WRAP_T, wrap);
-	
-
-		glTexImage2D(
-			target,
-			level,
-			GL_RGBA,
-			W, H,
-			0,
-			GL_RGBA,
-			GL_UNSIGNED_BYTE,
-			colors
-		);
-
-	}
 
 	const double frame_time = 1.0 / 60.0;
 	auto last_update = glfwGetTime();
@@ -176,7 +152,7 @@ int main()
 				colors[y * W + x] = WATER;
 			}
 			for(int x = 0; x < W; x++){
-				for(int y = 0; y < W; y++){
+				for(int y = 0; y < H; y++){
 					int i = y * W + x;
 					if(parity[i] != p) continue;
 					parity[i] = !p;
@@ -229,19 +205,8 @@ int main()
 		
 		
 		// Render
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, tela);
-		glTexSubImage2D(
-			GL_TEXTURE_2D,
-			0,
-			0,
-			0,
-			W,
-			H,
-			GL_RGBA,
-			GL_UNSIGNED_BYTE,
-			colors
-		);
+		tela.bind(0);
+		tela.update(colors, W, H, 0, 0);
 		
 
 		glClearColor( 0.2f, 0.3f, 0.3f, 1.0f );
@@ -249,12 +214,11 @@ int main()
 		
 		shaderProgram1.use();
 		
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, tela);
+		tela.bind(0);
 		shaderProgram1.setUniform("color", 0);
 		
 		VAO.bind();
-		glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers( window );
 		glfwPollEvents();

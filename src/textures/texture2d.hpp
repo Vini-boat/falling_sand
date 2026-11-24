@@ -29,7 +29,6 @@ struct Texture2DParameters {
     FilterMode::FilterMode mag_filter  = FilterMode::LINEAR;
 
     bool       gen_mipmaps = true;
-    bool       flip_y      = true;
 };
 
 namespace InternalFormat {
@@ -61,8 +60,15 @@ struct Texture2D {
     glID ID;
 
     Texture2D(
-        const char* texture_file_path,
+        const void* data,
+        int width, int height,
         const Texture2DParameters& params = {}
+    );
+    
+    void update(
+        const void* data,
+        int width, int height,
+        int offset_x, int offset_y
     );
 
     void bind(unsigned int texture_unit);
