@@ -15,6 +15,9 @@
 #include "shaders/shader.hpp"
 #include "textures/texture2d.hpp"
 #include "camera/camera.hpp"
+#include <random>
+
+std::mt19937 rng(std::random_device{}());
 
 using namespace std;
 
@@ -49,14 +52,38 @@ int indices[] = {
 	2,3,0
 };
 	
-constexpr int W = 256;
-constexpr int H = 256;
+constexpr int W = 64;
+constexpr int H = 64;
 glm::u8vec4 colors[W*H];
+vector<bool> parity(W*H, 0);
+
+constexpr auto SAND = glm::u8vec4(194, 178, 128,255);
+constexpr auto AIR = glm::u8vec4(130, 200, 229,255);
+constexpr auto WATER = glm::u8vec4(14, 135, 204,255);
+
+
+int rng_sign(){
+	bool sign = rng() & 1;
+	if(sign){
+		return -1;
+	} else{
+		return 1;
+	}
+}
+
+
+glm::vec2 mouse_pos;
+void mouse_callback(GLFWwindow* window, double posX, double posY)
+{
+	mouse_pos = {posX,posY};
+}
 
 int main() 
 {
-	for(auto& c : colors) c = glm::u8vec4(0,0,0,255);
+	for(auto& c : colors) c = AIR;
+
 	GLFWwindow* window = initWindow(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_NAME);
+	glfwSetCursorPosCallback(window, mouse_callback);
 
 	unsigned int VBO;
 	glGenBuffers(1, &VBO);
@@ -119,15 +146,104 @@ int main()
 
 	}
 
+	const double frame_time = 1.0 / 60.0;
+	auto last_update = glfwGetTime();
+	unsigned long long tick = 0; 
 	while(!glfwWindowShouldClose(window))
 	{
+
 		auto time = (float)glfwGetTime();
 		dt = time - time_last_frame;
 		time_last_frame = time;
 		
 		processInput(window);
 		
+		
+		
+		// update
+		double u_dt = glfwGetTime() - last_update; 
+		if(u_dt >= frame_time){
+			bool p = tick & 1;
+			tick++;
+			if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1)){
+				int x = (int)mouse_pos.x / 8; 
+				int y = (int)mouse_pos.y / 8;
+				colors[y * W + x] = SAND;
+			}
+			if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2)){
+				int x = (int)mouse_pos.x / 8; 
+				int y = (int)mouse_pos.y / 8;
+				colors[y * W + x] = WATER;
+			}
+			for(int x = 0; x < W; x++){
+				for(int y = 0; y < W; y++){
+					int i = y * W + x;
+					if(parity[i] != p) continue;
+					parity[i] = !p;
+					if(colors[i] == SAND){
+
+						const int dxs[] = {0,-1,1};
+						for(int dx = 0; dx < 3; dx++){
+							int ny = y+1;
+							int nx = x + dxs[dx] * rng_sign();
+	
+							if(ny == H) continue;
+							if(nx == W) continue;
+							if(nx == -1) continue; 
+	
+							int down = ny * W + nx;
+							
+							if(colors[down] == SAND) continue;
+							
+							swap(colors[i],colors[down]);
+							parity.swap(parity[i],parity[down]);
+							break;
+						}
+					}
+					if(colors[i] == WATER){
+						const int dxs[] = {0,-1, 1,-1, 1};
+						const int dys[] = {1, 1, 1, 0, 0};
+						for(int d = 0; d < 5; d++){
+							int ny = y + dys[d];
+							int nx = x + dxs[d] * rng_sign();
+	
+							if(ny == H) continue;
+							if(nx == W) continue;
+							if(nx == -1) continue; 
+	
+							int down = ny * W + nx;
+							
+							if(colors[down] != AIR) continue;
+							
+							swap(colors[i],colors[down]);
+							parity.swap(parity[i],parity[down]);
+							break;
+						}
+
+					}
+					
+				}
+			}
+			last_update = glfwGetTime();
+		}
+		
+		
 		// Render
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, tela);
+		glTexSubImage2D(
+			GL_TEXTURE_2D,
+			0,
+			0,
+			0,
+			W,
+			H,
+			GL_RGBA,
+			GL_UNSIGNED_BYTE,
+			colors
+		);
+		
+
 		glClearColor( 0.2f, 0.3f, 0.3f, 1.0f );
 		glClear( GL_COLOR_BUFFER_BIT);
 		
