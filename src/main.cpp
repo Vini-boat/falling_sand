@@ -10,6 +10,7 @@
 #include <random>
 
 #include "glm/ext/vector_uint4_sized.hpp"
+#include "textures/image2d.hpp"
 #include "types.hpp"
 #include "window/window.hpp"
 #include "models/vertex_layout.hpp"
@@ -58,9 +59,9 @@ constexpr int H = 64;
 glm::u8vec4 colors[W*H];
 vector<bool> parity(W*H, 0);
 
-constexpr auto SAND = glm::u8vec4(194, 178, 128,255);
-constexpr auto AIR = glm::u8vec4(130, 200, 229,255);
-constexpr auto WATER = glm::u8vec4(14, 135, 204,255);
+constexpr auto SAND = glm::u8vec4(0,0,0,0);
+constexpr auto AIR = glm::u8vec4(2,0,0,0);
+constexpr auto WATER = glm::u8vec4(1,0,0,0);
 
 
 int rng_sign(){
@@ -124,8 +125,23 @@ int main()
 	Texture2D tela(colors,W,H, {
 		.min_filter = FilterMode::NEAREST,
 		.mag_filter = FilterMode::NEAREST,
+		.format = {
+			.internal = GL_RGBA8UI,
+			.format   = GL_RGBA_INTEGER,
+			.type	  = GL_UNSIGNED_BYTE
+		},
 		.gen_mipmaps = false
 	});
+
+	Image2D palette_image(ASSETS_DIR"/textures/palette.png");
+	Texture2D palette(palette_image, {
+		.min_filter = FilterMode::NEAREST,
+		.mag_filter = FilterMode::NEAREST,	
+		.gen_mipmaps = false
+	});
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
 	const double frame_time = 1.0 / 60.0;
@@ -211,12 +227,14 @@ int main()
 		
 		
 		// Render
-		tela.bind(0);
-		tela.update(colors, W, H, 0, 0);
+		shaderProgram1.use();
 		
 		tela.bind(0);
-		shaderProgram1.use();
+		tela.update(colors, W, H, 0, 0);
+		palette.bind(1);
+
 		shaderProgram1.setUniform("color", 0);
+		shaderProgram1.setUniform("palette", 1);
 		
 
 		glClearColor( 0.2f, 0.3f, 0.3f, 1.0f );

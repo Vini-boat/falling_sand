@@ -2,6 +2,7 @@
 
 #include <glad/glad.h>
 #include "types.hpp"
+#include "image2d.hpp"
 
 namespace WrapMode {
     enum WrapMode : GLenum {
@@ -22,32 +23,25 @@ namespace FilterMode{
     };
 }
 
-struct Texture2DParameters {
-    WrapMode::WrapMode   wrap_s        = WrapMode::REPEAT;
-    WrapMode::WrapMode   wrap_t        = WrapMode::REPEAT;
-    FilterMode::FilterMode min_filter  = FilterMode::LINEAR_MIPMAP_LINEAR;
-    FilterMode::FilterMode mag_filter  = FilterMode::LINEAR;
 
-    bool       gen_mipmaps = true;
-};
+// TODO:
+// namespace InternalFormat {
+//     enum InternalFormat : GLenum {
 
-namespace InternalFormat {
-    enum InternalFormat : GLenum {
+//     };
+// }
 
-    };
-}
+// namespace Format {
+//     enum Format : GLenum {
 
-namespace Format {
-    enum Format : GLenum {
+//     };
+// }
 
-    };
-}
+// namespace FormatDataType {
+//     enum FormatDataType : GLenum {
 
-namespace FormatDataType {
-    enum FormatDataType : GLenum {
-
-    };
-}
+//     };
+// }
 
 
 struct Texture2DFormat {
@@ -56,12 +50,30 @@ struct Texture2DFormat {
     GLenum type;
 };
 
+struct Texture2DParameters {
+    WrapMode::WrapMode   wrap_s        = WrapMode::REPEAT;
+    WrapMode::WrapMode   wrap_t        = WrapMode::REPEAT;
+    FilterMode::FilterMode min_filter  = FilterMode::LINEAR_MIPMAP_LINEAR;
+    FilterMode::FilterMode mag_filter  = FilterMode::LINEAR;
+    Texture2DFormat format = Texture2DFormat{
+        .internal = GL_RGBA,
+        .format   = GL_RGBA,
+        .type     = GL_UNSIGNED_BYTE
+    };
+    bool       gen_mipmaps = true;
+};
+
 struct Texture2D {
     glID ID;
+    Texture2DFormat format;
 
     Texture2D(
         const void* data,
         int width, int height,
+        const Texture2DParameters& params = {}
+    );
+    Texture2D(
+        const Image2D& img, 
         const Texture2DParameters& params = {}
     );
     

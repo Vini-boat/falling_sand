@@ -16,6 +16,8 @@ struct Logger {
         std::source_location loc = std::source_location::current()
     );
     
+    void glCheck(const char* onde, std::source_location loc = std::source_location::current());
+
     private:
         struct Styles {
             static constexpr const char* clear = "\033[0m";
