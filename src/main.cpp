@@ -8,6 +8,7 @@
 #include <string>
 #include <math.h>
 #include <random>
+#include <type_traits>
 
 #include "glm/ext/vector_uint4_sized.hpp"
 #include "textures/image2d.hpp"
@@ -35,6 +36,26 @@ const auto z_axis = glm::vec3(0.0f,0.0f,1.0f);
 auto dt = 0.0f;
 auto time_last_frame = 0.0f;
 
+
+int rng_sign(){
+	bool sign = rng() & 1;
+	if(sign){
+		return -1;
+	} else{
+		return 1;
+	}
+}
+
+glm::vec2 mouse_pos;
+void mouse_callback(GLFWwindow* window, double posX, double posY)
+{
+	mouse_pos = {posX,posY};
+}
+
+void error_callback(int error, const char* description) {
+    _log.error(format("GLFW: error code: {}: {}", error, description));
+}
+
 void processInput(GLFWwindow* window)
 {
 	// Fechar a janela
@@ -53,40 +74,36 @@ unsigned int indices[] = {
 	0,1,2,
 	2,3,0
 };
+
+
+enum Type : u8 {
+	AIR = 0,
+	SAND,
+	WATER,
+	STONE,
+	COUNT
+};
+
+struct Cell {
+	Type type;
+	u8 flags : 5;
+	u8 shade : 3;
+	u16 data;
+};
+// Necessários pra não quebrar o layout dos dados
+static_assert(sizeof(Cell) == 4);
+static_assert(is_trivially_copyable<Cell>());
 	
 constexpr int W = 64;
 constexpr int H = 64;
-glm::u8vec4 colors[W*H];
+Cell colors[W*H];
 vector<bool> parity(W*H, 0);
 
-constexpr auto SAND = glm::u8vec4(0,0,0,0);
-constexpr auto AIR = glm::u8vec4(2,0,0,0);
-constexpr auto WATER = glm::u8vec4(1,0,0,0);
 
-
-int rng_sign(){
-	bool sign = rng() & 1;
-	if(sign){
-		return -1;
-	} else{
-		return 1;
-	}
-}
-
-
-glm::vec2 mouse_pos;
-void mouse_callback(GLFWwindow* window, double posX, double posY)
-{
-	mouse_pos = {posX,posY};
-}
-
-void error_callback(int error, const char* description) {
-    _log.error(format("GLFW: error code: {}: {}", error, description));
-}
 
 int main() 
 {
-	for(auto& c : colors) c = AIR;
+	for(auto& c : colors) c.type = AIR;
 
 	glfwSetErrorCallback(error_callback);
 	GLFWwindow* window = initWindow(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_NAME);
@@ -126,9 +143,9 @@ int main()
 		.min_filter = FilterMode::NEAREST,
 		.mag_filter = FilterMode::NEAREST,
 		.format = {
-			.internal = GL_RGBA8UI,
-			.format   = GL_RGBA_INTEGER,
-			.type	  = GL_UNSIGNED_BYTE
+			.internal = GL_R32UI,
+			.format   = GL_RED_INTEGER,
+			.type	  = GL_UNSIGNED_INT
 		},
 		.gen_mipmaps = false
 	});
@@ -166,60 +183,83 @@ int main()
 			if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1)){
 				int x = (int)mouse_pos.x / 8; 
 				int y = (int)mouse_pos.y / 8;
-				colors[y * W + x] = SAND;
+				colors[y * W + x].type = Type::SAND;
+				colors[y * W + x].shade = rng() & 7;
 			}
 			if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2)){
 				int x = (int)mouse_pos.x / 8; 
 				int y = (int)mouse_pos.y / 8;
-				colors[y * W + x] = WATER;
+				colors[y * W + x].type = Type::WATER;
+				colors[y * W + x].shade = rng() & 7;
+			}
+			if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_3)){
+				int x = (int)mouse_pos.x / 8; 
+				int y = (int)mouse_pos.y / 8;
+				colors[y * W + x].type = Type::AIR;
+			}
+			if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_4)){
+				int x = (int)mouse_pos.x / 8; 
+				int y = (int)mouse_pos.y / 8;
+				colors[y * W + x].type = Type::STONE;
+				colors[y * W + x].shade = rng() & 7;
 			}
 			for(int x = 0; x < W; x++){
 				for(int y = 0; y < H; y++){
 					int i = y * W + x;
 					if(parity[i] != p) continue;
 					parity[i] = !p;
-					if(colors[i] == SAND){
+					switch (colors[i].type) {
+						case COUNT:
+						case AIR:
+							break;
+						case SAND: {
+							const int dxs[] = {0,-1,1};
+							for(int dx = 0; dx < 3; dx++){
+								int ny = y+1;
+								int nx = x + dxs[dx] * rng_sign();
+		
+								if(ny == H) continue;
+								if(nx == W) continue;
+								if(nx == -1) continue; 
+		
+								int down = ny * W + nx;
+								
+								if(colors[down].type == SAND) continue;
+								if(colors[down].type == STONE) continue;
+								
+								swap(colors[i],colors[down]);
+								parity.swap(parity[i],parity[down]);
+								break;
+							}
+							break;
 
-						const int dxs[] = {0,-1,1};
-						for(int dx = 0; dx < 3; dx++){
-							int ny = y+1;
-							int nx = x + dxs[dx] * rng_sign();
-	
-							if(ny == H) continue;
-							if(nx == W) continue;
-							if(nx == -1) continue; 
-	
-							int down = ny * W + nx;
+						}
+						case WATER:{
+							const int dxs[] = {0,-1, 1,-1, 1};
+							const int dys[] = {1, 1, 1, 0, 0};
+							for(int d = 0; d < 5; d++){
+								int ny = y + dys[d];
+								int nx = x + dxs[d] * rng_sign();
+		
+								if(ny == H) continue;
+								if(nx == W) continue;
+								if(nx == -1) continue; 
+		
+								int down = ny * W + nx;
+								
+								if(colors[down].type != AIR) continue;
+								
+								swap(colors[i],colors[down]);
+								parity.swap(parity[i],parity[down]);
+								break;
+							}
+							break;
+						}
+						case STONE: {
 							
-							if(colors[down] == SAND) continue;
-							
-							swap(colors[i],colors[down]);
-							parity.swap(parity[i],parity[down]);
 							break;
 						}
 					}
-					if(colors[i] == WATER){
-						const int dxs[] = {0,-1, 1,-1, 1};
-						const int dys[] = {1, 1, 1, 0, 0};
-						for(int d = 0; d < 5; d++){
-							int ny = y + dys[d];
-							int nx = x + dxs[d] * rng_sign();
-	
-							if(ny == H) continue;
-							if(nx == W) continue;
-							if(nx == -1) continue; 
-	
-							int down = ny * W + nx;
-							
-							if(colors[down] != AIR) continue;
-							
-							swap(colors[i],colors[down]);
-							parity.swap(parity[i],parity[down]);
-							break;
-						}
-
-					}
-					
 				}
 			}
 			last_update = glfwGetTime();
@@ -227,17 +267,24 @@ int main()
 		
 		
 		// Render
+		_log.glCheck("");
 		shaderProgram1.use();
+		_log.glCheck("");
 		
 		tela.bind(0);
+		_log.glCheck("");
 		tela.update(colors, W, H, 0, 0);
+		_log.glCheck("");
 		palette.bind(1);
-
+		_log.glCheck("");
+		
 		shaderProgram1.setUniform("color", 0);
+		_log.glCheck("");
 		shaderProgram1.setUniform("palette", 1);
+		_log.glCheck("");
 		
 
-		glClearColor( 0.2f, 0.3f, 0.3f, 1.0f );
+		glClearColor(0.529f, 0.808f, 0.922f, 1.0f );
 		glClear( GL_COLOR_BUFFER_BIT);
 		
 		
