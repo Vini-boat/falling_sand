@@ -76,15 +76,26 @@ unsigned int indices[] = {
 };
 
 
-enum Type : u8 {
-	AIR = 0,
-	SAND,
-	WATER,
-	STONE,
-	COUNT
-};
 
 struct Cell {
+	enum Type : u8 {
+		AIR = 0,
+		SAND,
+		WATER,
+		STONE,
+		COUNT
+	};
+
+	enum Flags : u8 {
+		NONE    = 0,
+		PARITY  = 1 << 0,
+
+		FREE_1  = 1 << 1,
+		FREE_2  = 1 << 2,
+		FREE_3  = 1 << 3,
+		FREE_4  = 1 << 4,
+	};
+
 	Type type;
 	u8 flags : 5;
 	u8 shade : 3;
@@ -97,13 +108,10 @@ static_assert(is_trivially_copyable<Cell>());
 constexpr int W = 64;
 constexpr int H = 64;
 Cell colors[W*H];
-vector<bool> parity(W*H, 0);
-
-
 
 int main() 
 {
-	for(auto& c : colors) c.type = AIR;
+	for(auto& c : colors) c.type = Cell::AIR;
 
 	glfwSetErrorCallback(error_callback);
 	GLFWwindow* window = initWindow(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_NAME);
@@ -183,36 +191,36 @@ int main()
 			if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1)){
 				int x = (int)mouse_pos.x / 8; 
 				int y = (int)mouse_pos.y / 8;
-				colors[y * W + x].type = Type::SAND;
+				colors[y * W + x].type = Cell::Type::SAND;
 				colors[y * W + x].shade = rng() & 7;
 			}
 			if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2)){
 				int x = (int)mouse_pos.x / 8; 
 				int y = (int)mouse_pos.y / 8;
-				colors[y * W + x].type = Type::WATER;
+				colors[y * W + x].type = Cell::Type::WATER;
 				colors[y * W + x].shade = rng() & 7;
-			}
-			if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_3)){
-				int x = (int)mouse_pos.x / 8; 
-				int y = (int)mouse_pos.y / 8;
-				colors[y * W + x].type = Type::AIR;
 			}
 			if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_4)){
 				int x = (int)mouse_pos.x / 8; 
 				int y = (int)mouse_pos.y / 8;
-				colors[y * W + x].type = Type::STONE;
+				colors[y * W + x].type = Cell::Type::AIR;
+			}
+			if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_3)){
+				int x = (int)mouse_pos.x / 8; 
+				int y = (int)mouse_pos.y / 8;
+				colors[y * W + x].type = Cell::Type::STONE;
 				colors[y * W + x].shade = rng() & 7;
 			}
-			for(int x = 0; x < W; x++){
-				for(int y = 0; y < H; y++){
+			for(int y = 0; y < H; y++){
+				for(int x = 0; x < W; x++){
 					int i = y * W + x;
-					if(parity[i] != p) continue;
-					parity[i] = !p;
+					if(bool(colors[i].flags & Cell::Flags::PARITY) != p) continue;
+					colors[i].flags = (colors[i].flags & ~Cell::Flags::PARITY) | (p ? 0 : Cell::Flags::PARITY);
 					switch (colors[i].type) {
-						case COUNT:
-						case AIR:
+						case Cell::COUNT:
+						case Cell::AIR:
 							break;
-						case SAND: {
+						case Cell::SAND: {
 							const int dxs[] = {0,-1,1};
 							for(int dx = 0; dx < 3; dx++){
 								int ny = y+1;
@@ -224,17 +232,16 @@ int main()
 		
 								int down = ny * W + nx;
 								
-								if(colors[down].type == SAND) continue;
-								if(colors[down].type == STONE) continue;
+								if(colors[down].type == Cell::SAND) continue;
+								if(colors[down].type == Cell::STONE) continue;
 								
 								swap(colors[i],colors[down]);
-								parity.swap(parity[i],parity[down]);
 								break;
 							}
 							break;
 
 						}
-						case WATER:{
+						case Cell::WATER:{
 							const int dxs[] = {0,-1, 1,-1, 1};
 							const int dys[] = {1, 1, 1, 0, 0};
 							for(int d = 0; d < 5; d++){
@@ -247,15 +254,14 @@ int main()
 		
 								int down = ny * W + nx;
 								
-								if(colors[down].type != AIR) continue;
+								if(colors[down].type != Cell::AIR) continue;
 								
 								swap(colors[i],colors[down]);
-								parity.swap(parity[i],parity[down]);
 								break;
 							}
 							break;
 						}
-						case STONE: {
+						case Cell::STONE: {
 							
 							break;
 						}
@@ -267,21 +273,14 @@ int main()
 		
 		
 		// Render
-		_log.glCheck("");
 		shaderProgram1.use();
-		_log.glCheck("");
 		
 		tela.bind(0);
-		_log.glCheck("");
 		tela.update(colors, W, H, 0, 0);
-		_log.glCheck("");
 		palette.bind(1);
-		_log.glCheck("");
 		
 		shaderProgram1.setUniform("color", 0);
-		_log.glCheck("");
 		shaderProgram1.setUniform("palette", 1);
-		_log.glCheck("");
 		
 
 		glClearColor(0.529f, 0.808f, 0.922f, 1.0f );
