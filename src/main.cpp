@@ -75,7 +75,9 @@ unsigned int indices[] = {
 	2,3,0
 };
 
-
+struct WaterData{
+	i16 direction;
+};
 
 struct Cell {
 	enum Type : u8 {
@@ -95,24 +97,63 @@ struct Cell {
 		FREE_3  = 1 << 3,
 		FREE_4  = 1 << 4,
 	};
-
 	Type type;
 	u8 flags : 5;
 	u8 shade : 3;
-	u16 data;
+	union {
+		WaterData water_data;
+	};
+
+	bool flagIs(Flags mask){
+		return flags & mask;
+	};
+
+	void flagSet(Flags mask, bool value){
+		flags = (flags & ~mask) | (value ? 0 : mask);
+	};
+
 };
 // Necessários pra não quebrar o layout dos dados
 static_assert(sizeof(Cell) == 4);
 static_assert(is_trivially_copyable<Cell>());
-	
-constexpr int W = 64;
-constexpr int H = 64;
-Cell colors[W*H];
+
+
+// TODO: temporário, só por enquanto, em algum momento a simulação vai ter que cuidar do próprio quad e responder isso
+glm::ivec2 screen2sim(glm::vec2 pos){
+	return (glm::ivec2)pos / 8;
+};
+
+struct PixelSimulation {
+	static const int W = 64;
+	static const int H = 64;
+	Cell cells[W * H];
+	Cell stub{};
+
+	PixelSimulation(){
+		for(auto& c : cells) c = Cell{};
+	}
+
+	bool isOutOfBounds(int x, int y){
+		return x < 0 || x >= W || y < 0 || y >= H;
+	};
+
+	Cell& getCell(int x, int y){
+		if(isOutOfBounds(x, y)) return stub;
+		return cells[y * W + x];
+	};
+	Cell& getCell(glm::ivec2 pos){
+		return getCell(pos.x,pos.y);
+	};
+
+	void swapCells(Cell& a, Cell& b){
+		swap(a,b);
+	};
+};
+
 
 int main() 
 {
-	for(auto& c : colors) c.type = Cell::AIR;
-
+	PixelSimulation  ps;
 	glfwSetErrorCallback(error_callback);
 	GLFWwindow* window = initWindow(WINDOW_WIDTH,WINDOW_HEIGHT,WINDOW_NAME);
 	glfwSetCursorPosCallback(window, mouse_callback);
@@ -147,7 +188,7 @@ int main()
 		ASSETS_DIR"/shaders/simulation/sim.fs"
 	);
 
-	Texture2D tela(colors,W,H, {
+	Texture2D cells_texture(ps.cells, ps.W,ps.H, {
 		.min_filter = FilterMode::NEAREST,
 		.mag_filter = FilterMode::NEAREST,
 		.format = {
@@ -189,34 +230,33 @@ int main()
 			bool p = tick & 1;
 			tick++;
 			if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1)){
-				int x = (int)mouse_pos.x / 8; 
-				int y = (int)mouse_pos.y / 8;
-				colors[y * W + x].type = Cell::Type::SAND;
-				colors[y * W + x].shade = rng() & 7;
+				glm::ivec2 pos = screen2sim(mouse_pos);
+				ps.getCell(pos).type = Cell::Type::SAND;
+				ps.getCell(pos).shade = rng() & 7;
 			}
 			if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2)){
-				int x = (int)mouse_pos.x / 8; 
-				int y = (int)mouse_pos.y / 8;
-				colors[y * W + x].type = Cell::Type::WATER;
-				colors[y * W + x].shade = rng() & 7;
+				glm::ivec2 pos = screen2sim(mouse_pos);
+				ps.getCell(pos).type = Cell::Type::WATER;
+				ps.getCell(pos).shade = rng() & 7;
 			}
 			if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_4)){
-				int x = (int)mouse_pos.x / 8; 
-				int y = (int)mouse_pos.y / 8;
-				colors[y * W + x].type = Cell::Type::AIR;
+				glm::ivec2 pos = screen2sim(mouse_pos);
+				ps.getCell(pos).type = Cell::Type::AIR;
 			}
 			if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_3)){
-				int x = (int)mouse_pos.x / 8; 
-				int y = (int)mouse_pos.y / 8;
-				colors[y * W + x].type = Cell::Type::STONE;
-				colors[y * W + x].shade = rng() & 7;
+				glm::ivec2 pos = screen2sim(mouse_pos);
+				ps.getCell(pos).type = Cell::Type::STONE;
+				ps.getCell(pos).shade = rng() & 7;
 			}
-			for(int y = 0; y < H; y++){
-				for(int x = 0; x < W; x++){
-					int i = y * W + x;
-					if(bool(colors[i].flags & Cell::Flags::PARITY) != p) continue;
-					colors[i].flags = (colors[i].flags & ~Cell::Flags::PARITY) | (p ? 0 : Cell::Flags::PARITY);
-					switch (colors[i].type) {
+			for(int y = 0; y < ps.H; y++){
+				for(int x = 0; x < ps.W; x++){
+					Cell& current = ps.getCell(x,y);
+
+					if(current.flagIs(Cell::PARITY) != p) continue;
+
+					current.flagSet(Cell::PARITY, p);
+					
+					switch (current.type) {
 						case Cell::COUNT:
 						case Cell::AIR:
 							break;
@@ -226,37 +266,40 @@ int main()
 								int ny = y+1;
 								int nx = x + dxs[dx] * rng_sign();
 		
-								if(ny == H) continue;
-								if(nx == W) continue;
-								if(nx == -1) continue; 
+								if(ps.isOutOfBounds(nx, ny)) continue;
 		
-								int down = ny * W + nx;
+								Cell& next = ps.getCell(nx,ny);
 								
-								if(colors[down].type == Cell::SAND) continue;
-								if(colors[down].type == Cell::STONE) continue;
+								if(next.type == Cell::SAND) continue;
+								if(next.type == Cell::STONE) continue;
 								
-								swap(colors[i],colors[down]);
+								ps.swapCells(current, next);
 								break;
 							}
 							break;
 
 						}
 						case Cell::WATER:{
-							const int dxs[] = {0,-1, 1,-1, 1};
+							if(current.water_data.direction == 0) 
+								current.water_data.direction = rng_sign();
+							const int dxs[] = {0,-1, 1, current.water_data.direction,-current.water_data.direction};
 							const int dys[] = {1, 1, 1, 0, 0};
+
 							for(int d = 0; d < 5; d++){
 								int ny = y + dys[d];
-								int nx = x + dxs[d] * rng_sign();
+								int nx = x + dxs[d];
 		
-								if(ny == H) continue;
-								if(nx == W) continue;
-								if(nx == -1) continue; 
+								if(ps.isOutOfBounds(nx, ny)) continue;
 		
-								int down = ny * W + nx;
+								Cell& next = ps.getCell(nx,ny);
 								
-								if(colors[down].type != Cell::AIR) continue;
-								
-								swap(colors[i],colors[down]);
+								if(next.type != Cell::AIR) continue;
+								if(dys[d]){
+									current.water_data.direction = 0;
+								} else if (d ==4){
+									current.water_data.direction *= -1;
+								}
+								ps.swapCells(current, next);
 								break;
 							}
 							break;
@@ -275,8 +318,8 @@ int main()
 		// Render
 		shaderProgram1.use();
 		
-		tela.bind(0);
-		tela.update(colors, W, H, 0, 0);
+		cells_texture.bind(0);
+		cells_texture.update(ps.cells, ps.W, ps.H, 0, 0);
 		palette.bind(1);
 		
 		shaderProgram1.setUniform("color", 0);
